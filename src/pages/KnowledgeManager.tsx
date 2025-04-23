@@ -74,13 +74,12 @@ const KnowledgeManager = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="flex items-center mb-6">
           <Button 
-            variant="outline" 
-            size="sm" 
+            variant="ghost" 
+            size="icon" 
             onClick={handleBackToDashboard}
-            className="mr-4"
+            className="text-white hover:bg-white/10 mr-4"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
+            <ArrowLeft className="h-5 w-5" />
           </Button>
           <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
             Gerenciador de Conhecimento
@@ -118,3 +117,4 @@ const KnowledgeManager = () => {
 };
 
 export default KnowledgeManager;
+
