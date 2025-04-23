@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -8,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useToast } from '@/hooks/use-toast';
 
-// Import refactored components
 import SearchBar from '@/components/knowledge/SearchBar';
 import DocumentGrid from '@/components/knowledge/DocumentGrid';
 import AddDocumentDialog from '@/components/knowledge/AddDocumentDialog';
@@ -21,7 +19,6 @@ const KnowledgeManager = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDocumentOpen, setIsAddDocumentOpen] = useState(false);
   
-  // Use the custom hook for document management
   const { 
     documents, 
     isLoading, 
@@ -32,12 +29,10 @@ const KnowledgeManager = () => {
     clearAllDocuments
   } = useDocuments();
 
-  // Navigate back to dashboard
   const handleBackToDashboard = () => {
     navigate('/dashboard');
   };
 
-  // Handle adding a new document
   const handleAddDocument = async (file: File, category: string) => {
     await uploadFileToWebhook(file, category);
   };
@@ -75,11 +70,11 @@ const KnowledgeManager = () => {
         <div className="flex items-center mb-6">
           <Button 
             variant="ghost" 
-            size="icon" 
             onClick={handleBackToDashboard}
             className="text-white hover:bg-white/10 mr-4"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="mr-2 h-5 w-5" />
+            Voltar
           </Button>
           <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
             Gerenciador de Conhecimento
@@ -87,7 +82,6 @@ const KnowledgeManager = () => {
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-          {/* Search and Action Buttons */}
           <SearchBar 
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
@@ -97,14 +91,12 @@ const KnowledgeManager = () => {
             isRefreshing={isRefreshing}
           />
 
-          {/* Document Grid */}
           <DocumentGrid 
             documents={documents}
             searchQuery={searchQuery}
             onDeleteDocument={handleDeleteDocument}
           />
 
-          {/* Add Document Dialog */}
           <AddDocumentDialog 
             isOpen={isAddDocumentOpen}
             onOpenChange={setIsAddDocumentOpen}
@@ -117,4 +109,3 @@ const KnowledgeManager = () => {
 };
 
 export default KnowledgeManager;
-
