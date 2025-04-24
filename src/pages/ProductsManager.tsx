@@ -3,6 +3,7 @@ import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import ProductsHeader from '@/components/products/ProductsHeader';
+import ProductsContent from '@/components/products/ProductsContent';
 
 const ProductsManager = () => {
   const { user, isLoading } = useAuth();
@@ -26,10 +27,7 @@ const ProductsManager = () => {
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
       <ProductsHeader />
       <main className="container mx-auto px-4 py-8">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">
-          Gestão de Produtos
-        </h2>
-        {/* Products management content will be added here in the next iteration */}
+        <ProductsContent />
       </main>
     </div>
   );

@@ -209,22 +209,43 @@ export type Database = {
       }
       products: {
         Row: {
+          category: string | null
           content: string | null
+          created_at: string | null
+          description: string | null
           embedding: string | null
           id: number
           metadata: Json | null
+          name: string | null
+          price: number | null
+          status: string | null
+          updated_at: string | null
         }
         Insert: {
+          category?: string | null
           content?: string | null
+          created_at?: string | null
+          description?: string | null
           embedding?: string | null
           id?: number
           metadata?: Json | null
+          name?: string | null
+          price?: number | null
+          status?: string | null
+          updated_at?: string | null
         }
         Update: {
+          category?: string | null
           content?: string | null
+          created_at?: string | null
+          description?: string | null
           embedding?: string | null
           id?: number
           metadata?: Json | null
+          name?: string | null
+          price?: number | null
+          status?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
