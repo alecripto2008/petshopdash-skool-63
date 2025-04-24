@@ -1,12 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
+import { RefreshCw, LoaderCircle } from 'lucide-react';
+import ScheduleHeader from '@/components/schedule/ScheduleHeader';
 import { isSameDay, parseISO, addDays, addHours, addMinutes, format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { 
-  ArrowLeft, RefreshCw, LoaderCircle
+  ArrowLeft, 
 } from 'lucide-react';
 import { useCalendarEvents, CalendarEvent, EventFormData } from '@/hooks/useCalendarEvents';
 import { EventFormDialog } from '@/components/EventFormDialog';
@@ -16,7 +17,6 @@ import { CalendarSidebar } from '@/components/schedule/CalendarSidebar';
 import { EventsCard } from '@/components/schedule/EventsCard';
 import { AppointmentsSection } from '@/components/schedule/AppointmentsSection';
 
-// Dados mock para os agendamentos
 const mockAppointments: Appointment[] = [
   {
     id: 1,
@@ -280,35 +280,8 @@ const Schedule = () => {
   
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
-      <div className="container mx-auto px-4 py-12">
-        <div className="mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => navigate('/dashboard')} className="flex items-center gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Voltar
-            </Button>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">
-              Agenda de Atendimentos
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              onClick={refreshEventsPost} 
-              className="flex items-center gap-2" 
-              disabled={isEventsLoading}
-            >
-              {isEventsLoading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              Atualizar
-            </Button>
-            {lastUpdated && (
-              <span className="text-xs text-gray-500 dark:text-gray-400 hidden md:inline-block">
-                Última atualização: {format(lastUpdated, "dd/MM/yyyy HH:mm:ss")}
-              </span>
-            )}
-          </div>
-        </div>
-
+      <ScheduleHeader />
+      <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-3">
             <CalendarSidebar 

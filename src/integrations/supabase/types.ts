@@ -9,6 +9,81 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      chats: {
+        Row: {
+          app: string | null
+          conversation_id: string | null
+          created_at: string
+          id: number
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          app?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: number
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          app?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: number
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      customers: {
+        Row: {
+          active: boolean | null
+          app: string | null
+          cliente_name: string | null
+          created_at: string
+          distance: number | null
+          email: string | null
+          id: number
+          lat: number | null
+          location: string | null
+          long: number | null
+          pagamento: string | null
+          phone: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          app?: string | null
+          cliente_name?: string | null
+          created_at?: string
+          distance?: number | null
+          email?: string | null
+          id?: number
+          lat?: number | null
+          location?: string | null
+          long?: number | null
+          pagamento?: string | null
+          phone?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          app?: string | null
+          cliente_name?: string | null
+          created_at?: string
+          distance?: number | null
+          email?: string | null
+          id?: number
+          lat?: number | null
+          location?: string | null
+          long?: number | null
+          pagamento?: string | null
+          phone?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       dados_cliente: {
         Row: {
           asaas_customer_id: string | null
@@ -93,6 +168,42 @@ export type Database = {
           id?: number
           message?: Json
           session_id?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          celphone: string | null
+          client: string | null
+          created_at: string
+          description: string | null
+          id: number
+          sessionid: string | null
+          type: string | null
+          typeservice: string | null
+          value: number | null
+        }
+        Insert: {
+          celphone?: string | null
+          client?: string | null
+          created_at?: string
+          description?: string | null
+          id?: number
+          sessionid?: string | null
+          type?: string | null
+          typeservice?: string | null
+          value?: number | null
+        }
+        Update: {
+          celphone?: string | null
+          client?: string | null
+          created_at?: string
+          description?: string | null
+          id?: number
+          sessionid?: string | null
+          type?: string | null
+          typeservice?: string | null
+          value?: number | null
         }
         Relationships: []
       }
