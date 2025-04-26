@@ -6,13 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
-
-interface WebhookConfig {
-  id: number;
-  name: string;
-  url: string;
-  description: string;
-}
+import type { WebhookConfig } from '@/types/webhook';
 
 const ConfigContent = () => {
   const [configs, setConfigs] = useState<WebhookConfig[]>([]);
@@ -25,41 +19,13 @@ const ConfigContent = () => {
 
   const fetchConfigs = async () => {
     try {
-      // First, check if the table exists
-      const { data: tableExists, error: tableCheckError } = await supabase
+      const { data, error } = await supabase
         .from('webhook_configs')
-        .select('id')
-        .limit(1)
-        .maybeSingle();
+        .select('*')
+        .order('name');
 
-      // If we can't access the table or it doesn't exist yet, create sample configs in memory
-      if (tableCheckError || tableExists === null) {
-        console.log('Webhook configs table may not exist, using default configs');
-        const defaultConfigs: WebhookConfig[] = [
-          {
-            id: 1,
-            name: 'Webhook de Mensagem',
-            url: 'https://webhook.n8nlabz.com.br/webhook/envia_mensagem',
-            description: 'Endpoint para envio de mensagens pelo sistema'
-          },
-          {
-            id: 2,
-            name: 'Webhook de Documentos',
-            url: 'https://webhook.n8nlabz.com.br/webhook/envia_rag',
-            description: 'Endpoint para gerenciamento de documentos RAG'
-          }
-        ];
-        setConfigs(defaultConfigs);
-      } else {
-        // If the table exists, fetch data normally
-        const { data, error } = await supabase
-          .from('webhook_configs')
-          .select('*')
-          .order('name');
-
-        if (error) throw error;
-        setConfigs(data as WebhookConfig[]);
-      }
+      if (error) throw error;
+      setConfigs(data as WebhookConfig[]);
     } catch (error) {
       console.error('Error fetching configs:', error);
       toast({
@@ -67,17 +33,6 @@ const ConfigContent = () => {
         description: "Não foi possível carregar as configurações do sistema.",
         variant: "destructive",
       });
-      
-      // Provide fallback data in case of error
-      const fallbackConfigs: WebhookConfig[] = [
-        {
-          id: 1,
-          name: 'Webhook de Mensagem (Padrão)',
-          url: 'https://webhook.n8nlabz.com.br/webhook/envia_mensagem',
-          description: 'Endpoint para envio de mensagens pelo sistema'
-        }
-      ];
-      setConfigs(fallbackConfigs);
     } finally {
       setIsLoading(false);
     }
@@ -85,27 +40,20 @@ const ConfigContent = () => {
 
   const handleUpdateConfig = async (id: number, newUrl: string) => {
     try {
-      // Try to update in database if it exists
       const { error } = await supabase
         .from('webhook_configs')
-        .update({ url: newUrl })
+        .update({ url: newUrl, updated_at: new Date().toISOString() })
         .eq('id', id);
 
-      // If the update fails, just update in local state
-      if (error) {
-        console.log('Could not update in database, updating in local state only');
-        setConfigs(prev => 
-          prev.map(config => 
-            config.id === id ? { ...config, url: newUrl } : config
-          )
-        );
-      }
+      if (error) throw error;
 
       toast({
         title: "Configuração atualizada",
         description: "A configuração foi atualizada com sucesso.",
-        variant: "default",
       });
+      
+      // Refresh configs after update
+      await fetchConfigs();
     } catch (error) {
       console.error('Error updating config:', error);
       toast({
