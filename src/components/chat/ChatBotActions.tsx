@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { Pause, Play } from 'lucide-react';
 import PauseDurationDialog from '@/components/PauseDurationDialog';
 import { getWebhookUrl } from '@/services/webhookService';
 import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
@@ -61,10 +62,21 @@ const ChatBotActions = ({ selectedPhoneNumber, selectedChat, isLoading }: ChatBo
     }
   };
 
-  // Removed the startBot function as it references a non-existent webhook
-
   return (
     <>
+      <div className="flex items-center gap-2 ml-auto">
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-1"
+          onClick={(e) => openPauseDialog(selectedPhoneNumber, e)}
+          disabled={isLoading?.pauseBot || !selectedPhoneNumber}
+        >
+          <Pause className="h-4 w-4" />
+          Pausar
+        </Button>
+      </div>
+      
       <PauseDurationDialog 
         isOpen={pauseDialogOpen}
         onClose={closePauseDialog}

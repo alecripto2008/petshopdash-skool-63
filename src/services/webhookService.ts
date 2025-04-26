@@ -9,7 +9,6 @@ const DEFAULT_WEBHOOKS = {
   [WEBHOOK_IDENTIFIERS.UPLOAD_RAG]: 'https://webhook.n8nlabz.com.br/webhook/upload-rag',
   [WEBHOOK_IDENTIFIERS.CREATE_EVOLUTION_INSTANCE]: 'https://webhook.n8nlabz.com.br/webhook/create-evolution-instance',
   [WEBHOOK_IDENTIFIERS.UPDATE_QR_CODE]: 'https://webhook.n8nlabz.com.br/webhook/update-qr-code',
-  [WEBHOOK_IDENTIFIERS.CRIA_USUARIO]: 'https://webhook.n8nlabz.com.br/webhook/cria-usuario',
   [WEBHOOK_IDENTIFIERS.CONFIRM_EVOLUTION_STATUS]: 'https://webhook.n8nlabz.com.br/webhook/confirma',
   [WEBHOOK_IDENTIFIERS.UPDATE_EVOLUTION_QR]: 'https://webhook.n8nlabz.com.br/webhook/atualizar-qr-code'
 };

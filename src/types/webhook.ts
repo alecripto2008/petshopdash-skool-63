@@ -15,7 +15,6 @@ export const WEBHOOK_IDENTIFIERS = {
   UPLOAD_RAG: 'upload_rag',
   CREATE_EVOLUTION_INSTANCE: 'create_evolution_instance',
   UPDATE_QR_CODE: 'update_qr_code',
-  CRIA_USUARIO: 'cria_usuario',
   CONFIRM_EVOLUTION_STATUS: 'confirm_evolution_status',
   UPDATE_EVOLUTION_QR: 'update_evolution_qr'
 }

@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { Contact } from '@/types/client';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { getWebhookUrl } from '@/services/webhookService';
 
 export const useClientActions = () => {
   const [loadingContacts, setLoadingContacts] = useState(true);
@@ -33,7 +32,7 @@ export const useClientActions = () => {
           cpfCnpj: client.cpf_cnpj,
           asaasCustomerId: client.asaas_customer_id,
           payments: client.payments,
-          status: 'Active',
+          status: 'Active' as 'Active' | 'Inactive',
           notes: '',
           lastContact: client.created_at ? new Date(client.created_at).toLocaleDateString('pt-BR') : 'Desconhecido'
         }));
@@ -91,8 +90,6 @@ export const useClientActions = () => {
           description: `${newContact.name} foi adicionado com sucesso.`,
         });
         
-        // Removed webhook call to CREATE_USER since it doesn't exist
-        
         return true;
       }
       return false;
@@ -131,8 +128,6 @@ export const useClientActions = () => {
         description: `As informações do cliente foram atualizadas.`,
       });
       
-      // Removed webhook call to UPDATE_USER since it doesn't exist
-      
       return true;
     } catch (error) {
       console.error('Erro ao atualizar cliente:', error);
@@ -159,8 +154,6 @@ export const useClientActions = () => {
         description: "O cliente foi removido da sua lista de clientes.",
         variant: "destructive",
       });
-      
-      // Removed webhook call to DELETE_USER since it doesn't exist
       
       return true;
     } catch (error) {

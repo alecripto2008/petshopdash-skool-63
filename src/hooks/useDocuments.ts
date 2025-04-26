@@ -106,11 +106,10 @@ export const useDocuments = () => {
     });
   };
 
-  // Delete document function - removing webhook reference
+  // Delete document function - simplified implementation
   const handleDeleteDocument = async (id: number, title: string) => {
     try {
-      // Removed reference to non-existent DELETE_FILE_RAG webhook
-      console.log('Document deletion functionality is not available');
+      console.log(`Document deletion for ${title} (ID: ${id}) is not available`);
       
       // Just update the UI for now
       setDocuments(documents.filter(doc => doc.id !== id));
@@ -130,11 +129,10 @@ export const useDocuments = () => {
     }
   };
 
-  // New function to clear all documents - removing webhook reference
+  // Clear all documents - simplified implementation
   const clearAllDocuments = async () => {
     try {
-      // Removed reference to non-existent CLEAR_RAG webhook
-      console.log('Clear all documents functionality is not available');
+      console.log('Clear all documents functionality is not implemented');
       
       // Just clear the UI for now
       setDocuments([]);

@@ -43,7 +43,7 @@ export const useClientManagement = () => {
 
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchClients().then(newContacts => setContacts(newContacts));
+    fetchClients().then(newContacts => setContacts(newContacts as Contact[]));
   };
 
   const handleContactClick = (contact: Contact) => {
@@ -135,7 +135,7 @@ export const useClientManagement = () => {
   };
   
   useEffect(() => {
-    fetchClients().then(newContacts => setContacts(newContacts));
+    fetchClients().then(newContacts => setContacts(newContacts as Contact[]));
   }, []);
 
   return {

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,7 +17,6 @@ const getWebhookDescription = (identifier: string): string => {
     upload_rag: 'Webhook para upload de arquivos na base de conhecimento',
     create_evolution_instance: 'Webhook para criar uma nova instância do WhatsApp',
     update_qr_code: 'Webhook para atualizar o QR code do sistema',
-    cria_usuario: 'Webhook para criação de novos usuários (versão em português)',
     confirm_evolution_status: 'Webhook para confirmar o status da conexão do WhatsApp',
     update_evolution_qr: 'Webhook para atualizar o QR code do WhatsApp'
   };
