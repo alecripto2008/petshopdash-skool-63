@@ -1,11 +1,12 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw, Check } from 'lucide-react';
 
+type ConfirmationStatus = 'waiting' | 'confirmed' | 'failed' | null;
+
 interface QrCodeSectionProps {
   qrCodeData: string;
-  confirmationStatus: 'waiting' | 'confirmed' | 'failed' | null;
+  confirmationStatus: ConfirmationStatus;
   instanceName: string;
   isLoading: boolean;
   retryCount: number;
