@@ -13,20 +13,12 @@ const getWebhookDescription = (identifier: string): string => {
   const descriptions: Record<string, string> = {
     send_message: 'Webhook para envio de mensagens do sistema',
     pause_bot: 'Webhook para pausar o bot temporariamente',
-    start_bot: 'Webhook para iniciar/retomar o bot',
     upload_rag: 'Webhook para upload de arquivos na base de conhecimento',
-    delete_file_rag: 'Webhook para remoção de arquivos da base de conhecimento',
-    clear_rag: 'Webhook para limpar toda a base de conhecimento',
-    confirm_evolution: 'Webhook para confirmar uma evolução do sistema',
     create_evolution_instance: 'Webhook para criar uma nova instância do WhatsApp',
     update_qr_code: 'Webhook para atualizar o QR code do sistema',
+    cria_usuario: 'Webhook para criação de novos usuários (versão em português)',
     confirm_evolution_status: 'Webhook para confirmar o status da conexão do WhatsApp',
-    update_evolution_qr: 'Webhook para atualizar o QR code do WhatsApp',
-    create_user: 'Webhook para criação de novos usuários',
-    update_user: 'Webhook para atualização de usuários',
-    delete_user: 'Webhook para remoção de usuários',
-    config_agent: 'Webhook para configuração de agentes do sistema',
-    cria_usuario: 'Webhook para criação de novos usuários (versão em português)'
+    update_evolution_qr: 'Webhook para atualizar o QR code do WhatsApp'
   };
   return descriptions[identifier] || 'Webhook do sistema';
 };
