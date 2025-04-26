@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -57,7 +56,6 @@ const PaymentsContent = () => {
   };
 
   const handleAddPayment = async () => {
-    // Validate input fields
     if (!newPayment.client || !newPayment.type || !newPayment.description || !newPayment.value) {
       toast({
         title: 'Erro ao adicionar pagamento',
@@ -67,7 +65,6 @@ const PaymentsContent = () => {
       return;
     }
 
-    // Parse value to ensure it's a valid number
     const numericValue = parseFloat(newPayment.value.replace(',', '.'));
     
     if (isNaN(numericValue)) {
@@ -79,7 +76,6 @@ const PaymentsContent = () => {
       return;
     }
 
-    // Insert the new payment
     const { error } = await supabase
       .from('payments')
       .insert({
@@ -101,10 +97,9 @@ const PaymentsContent = () => {
     toast({
       title: 'Pagamento adicionado',
       description: 'O pagamento foi adicionado com sucesso.',
-      variant: 'success',
+      variant: 'default',
     });
 
-    // Reset form and close dialog
     setNewPayment({
       client: '',
       type: '',
@@ -113,7 +108,6 @@ const PaymentsContent = () => {
     });
     setIsDialogOpen(false);
     
-    // Refresh the payments list
     refetch();
   };
 
@@ -188,7 +182,6 @@ const PaymentsContent = () => {
         </TableBody>
       </Table>
 
-      {/* Add Payment Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>

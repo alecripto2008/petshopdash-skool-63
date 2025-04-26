@@ -12,6 +12,7 @@ import EvolutionCard from '@/components/dashboard/EvolutionCard';
 import ScheduleCard from '@/components/dashboard/ScheduleCard';
 import ProductsCard from '@/components/dashboard/ProductsCard';
 import PaymentsCard from '@/components/dashboard/PaymentsCard';
+import { ConfigCard } from '@/components/dashboard/ConfigCard';
 
 const Dashboard = () => {
   const { user, isLoading } = useAuth();
