@@ -1,38 +1,46 @@
 
 import React from 'react';
-import { Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Package } from 'lucide-react';
 
 const ProductsCard = () => {
   const navigate = useNavigate();
-
+  
+  const handleClick = () => {
+    navigate('/products');
+  };
+  
   return (
-    <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/products')}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">
-          Gestão de Produtos
+    <Card className="cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl dark:bg-gray-800 dark:border-gray-700 dark:text-white" onClick={handleClick}>
+      <CardHeader className="pb-2 bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 text-white rounded-t-lg">
+        <CardTitle className="flex items-center gap-2">
+          <Package className="h-6 w-6" />
+          Produtos
         </CardTitle>
-        <Package className="h-4 w-4 text-petshop-blue dark:text-blue-400" />
+        <CardDescription className="text-blue-100">
+          Gestão de produtos
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="text-xs text-muted-foreground">
-          Gerencie o catálogo de produtos e serviços
+      <CardContent className="pt-6">
+        <div className="mb-4 flex justify-center">
+          <div className="bg-blue-100 dark:bg-blue-900/30 p-6 rounded-full">
+            <Package className="h-14 w-14 text-blue-500 dark:text-blue-400 animate-bounce" />
+          </div>
         </div>
-        <Button 
-          variant="ghost" 
-          className="w-full mt-4 text-petshop-blue dark:text-blue-400"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate('/products');
-          }}
-        >
-          Gerenciar Produtos
-        </Button>
+        <p className="text-gray-600 dark:text-gray-300 text-center">
+          Gerencie seu catálogo de produtos e serviços.
+        </p>
       </CardContent>
+      <CardFooter className="bg-gray-50 dark:bg-gray-700/50 rounded-b-lg border-t dark:border-gray-700 flex justify-center py-3">
+        <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800/50">
+          Gerenciar produtos
+        </Badge>
+      </CardFooter>
     </Card>
   );
 };
 
 export default ProductsCard;
+
