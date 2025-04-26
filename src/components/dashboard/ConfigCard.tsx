@@ -14,16 +14,23 @@ export function ConfigCard() {
         <Settings className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="text-sm text-muted-foreground mb-4">
-          Gerencie as configurações do sistema
+        <div className="flex flex-col space-y-2">
+          <div className="text-2xl font-bold">Sistema</div>
+          <p className="text-xs text-muted-foreground">
+            Gerencie webhooks e outras configurações do sistema
+          </p>
         </div>
-        <Button 
-          onClick={() => navigate("/config")} 
-          variant="outline" 
-          className="w-full"
-        >
-          Acessar Configurações
-        </Button>
+        <div className="mt-4">
+          <Button 
+            onClick={() => navigate("/config")} 
+            variant="outline" 
+            size="sm"
+            className="w-full"
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            Acessar Configurações
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
