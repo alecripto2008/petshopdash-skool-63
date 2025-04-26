@@ -10,6 +10,25 @@ import { EmptyWebhooksState } from './EmptyWebhooksState';
 import { WebhookCard } from './WebhookCard';
 import { WebhooksHeader } from './WebhooksHeader';
 
+const getWebhookDescription = (identifier: string): string => {
+  const descriptions: Record<string, string> = {
+    send_message: 'Webhook para envio de mensagens do sistema',
+    pause_bot: 'Webhook para pausar o bot temporariamente',
+    start_bot: 'Webhook para iniciar/retomar o bot',
+    upload_rag: 'Webhook para upload de arquivos na base de conhecimento',
+    delete_file_rag: 'Webhook para remoção de arquivos da base de conhecimento',
+    clear_rag: 'Webhook para limpar toda a base de conhecimento',
+    create_evolution_instance: 'Webhook para criar uma nova instância de evolução',
+    update_qr_code: 'Webhook para atualizar o QR code do sistema',
+    confirm_evolution: 'Webhook para confirmar uma evolução do sistema',
+    create_user: 'Webhook para criação de novos usuários',
+    update_user: 'Webhook para atualização de usuários',
+    delete_user: 'Webhook para remoção de usuários',
+    config_agent: 'Webhook para configuração de agentes do sistema'
+  };
+  return descriptions[identifier] || 'Webhook do sistema';
+};
+
 const ConfigContent = () => {
   const [configs, setConfigs] = useState<WebhookConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,25 +51,26 @@ const ConfigContent = () => {
       let existingWebhooks = data as WebhookConfig[];
       const webhookIdentifiers = new Set(existingWebhooks.map(w => w.identifier));
       
+      // Encontrar webhooks que faltam ser criados
       const missingWebhooks = Object.entries(WEBHOOK_IDENTIFIERS).filter(
         ([_, identifier]) => !webhookIdentifiers.has(identifier)
       );
       
       if (missingWebhooks.length > 0) {
-        console.log("Missing webhooks:", missingWebhooks);
+        console.log("Missing webhooks to be created:", missingWebhooks);
         
         for (const [name, identifier] of missingWebhooks) {
           const readableName = name.toLowerCase().split('_').map(
             word => word.charAt(0).toUpperCase() + word.slice(1)
           ).join(' ');
           
-          const defaultUrlPath = identifier.replace(/_/g, '-');
+          const defaultUrlPath = identifier.toLowerCase().replace(/_/g, '-');
           const defaultUrl = `https://webhook.n8nlabz.com.br/webhook/${defaultUrlPath}`;
           
           const newWebhook = {
             name: readableName,
             url: defaultUrl,
-            description: `URL para ${readableName}`,
+            description: getWebhookDescription(identifier.toLowerCase()),
             identifier: identifier
           };
           
@@ -60,21 +80,24 @@ const ConfigContent = () => {
             .select();
             
           if (insertError) {
-            console.error(`Erro ao inserir webhook ${newWebhook.name}:`, insertError);
+            console.error(`Error inserting webhook ${newWebhook.name}:`, insertError);
             toast({
               title: "Erro ao inserir webhook",
               description: `Não foi possível inserir o webhook ${newWebhook.name}`,
               variant: "destructive",
             });
+          } else {
+            console.log(`Successfully created webhook: ${newWebhook.name}`);
           }
         }
         
+        // Recarregar todos os webhooks após inserir os novos
         const { data: refreshedData, error: refreshError } = await supabase
           .from('webhook_configs')
           .select('*')
           .order('name');
           
-        if (!refreshError) {
+        if (!refreshError && refreshedData) {
           existingWebhooks = refreshedData as WebhookConfig[];
         }
       }
