@@ -3,16 +3,18 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Search, RefreshCw } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
+import { Input } from '@/components/ui/input';
 import AddProductDialog from './AddProductDialog';
 
 const ProductsContent = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
-  const { data: products, isLoading, refetch } = useQuery({
+  const { data: products, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -33,6 +35,11 @@ const ProductsContent = () => {
     },
   });
 
+  const filteredProducts = products?.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const handleAddProduct = async () => {
     await refetch();
     setIsAddDialogOpen(false);
@@ -50,10 +57,30 @@ const ProductsContent = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium">Produtos</h3>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Adicionar Produto
-        </Button>
+        <div className="flex gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500 dark:text-gray-400" />
+            <Input 
+              placeholder="Pesquisar produtos..." 
+              className="pl-10 w-full sm:w-64"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <Button 
+            variant="refresh" 
+            onClick={() => refetch()} 
+            disabled={isRefetching}
+            className="min-w-[40px]"
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
+          <Button onClick={() => setIsAddDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Adicionar Produto
+          </Button>
+        </div>
       </div>
 
       <Table>
@@ -66,7 +93,7 @@ const ProductsContent = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {products?.map((product) => (
+          {filteredProducts?.map((product) => (
             <TableRow key={product.id}>
               <TableCell>{product.name}</TableCell>
               <TableCell>{product.category}</TableCell>
