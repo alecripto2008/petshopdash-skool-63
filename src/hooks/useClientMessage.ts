@@ -1,10 +1,18 @@
 
 import { toast } from '@/hooks/use-toast';
+import { getWebhookUrl } from '@/services/webhookService';
+import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
+import { useState } from 'react';
 
 export const useClientMessage = () => {
+  const [isSending, setIsSending] = useState(false);
+
   const sendMessage = async (phone: string, message: string, pauseDuration: number | null) => {
     try {
-      const response = await fetch('https://webhook.n8nlabz.com.br/webhook/envia_mensagem', {
+      setIsSending(true);
+      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.SEND_MESSAGE);
+      
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,8 +44,10 @@ export const useClientMessage = () => {
         variant: "destructive",
       });
       return false;
+    } finally {
+      setIsSending(false);
     }
   };
 
-  return { sendMessage };
+  return { sendMessage, isSending };
 };
