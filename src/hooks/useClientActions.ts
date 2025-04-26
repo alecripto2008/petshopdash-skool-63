@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { Contact } from '@/types/client';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { getWebhookUrl } from '@/services/webhookService';
+import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 
 export const useClientActions = () => {
   const [loadingContacts, setLoadingContacts] = useState(true);
@@ -91,7 +93,10 @@ export const useClientActions = () => {
         });
         
         try {
-          await fetch('https://webhook.n8nlabz.com.br/webhook/cria_usuario', {
+          // Use o serviço de webhook para obter a URL
+          const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.CREATE_USER);
+          
+          await fetch(webhookUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -141,7 +146,10 @@ export const useClientActions = () => {
       });
       
       try {
-        await fetch('https://webhook.n8nlabz.com.br/webhook/edita_usuario', {
+        // Use o serviço de webhook para obter a URL
+        const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.UPDATE_USER);
+        
+        await fetch(webhookUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -183,7 +191,10 @@ export const useClientActions = () => {
       });
       
       try {
-        await fetch('https://webhook.n8nlabz.com.br/webhook/exclui_usuario', {
+        // Use o serviço de webhook para obter a URL
+        const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.DELETE_USER);
+        
+        await fetch(webhookUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

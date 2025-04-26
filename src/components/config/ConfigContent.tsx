@@ -40,14 +40,16 @@ const ConfigContent = () => {
       );
       
       if (missingWebhooks.length > 0) {
-        const defaultWebhooks: Partial<WebhookConfig>[] = missingWebhooks.map(([name, identifier]) => {
+        const defaultWebhooks: { name: string; url: string; description: string; identifier: string }[] = missingWebhooks.map(([name, identifier]) => {
           const readableName = name.toLowerCase().split('_').map(
             word => word.charAt(0).toUpperCase() + word.slice(1)
           ).join(' ');
           
+          const defaultUrl = `https://webhook.n8nlabz.com.br/webhook/${identifier.replace(/_/g, '-')}`;
+          
           return {
             name: readableName,
-            url: `https://webhook.n8nlabz.com.br/webhook/${identifier.replace(/_/g, '-')}`,
+            url: defaultUrl,
             description: `URL para ${readableName}`,
             identifier: identifier
           };

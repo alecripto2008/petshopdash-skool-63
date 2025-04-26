@@ -1,6 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { getWebhookUrl } from '@/services/webhookService';
+import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 
 // Document type definition
 export interface Document {
@@ -107,10 +110,12 @@ export const useDocuments = () => {
   // Delete document - Updated to call the webhook with the title
   const handleDeleteDocument = async (id: number, title: string) => {
     try {
-      // Call webhook to delete file from RAG system
+      // Usar o serviço de webhook para obter a URL
+      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.DELETE_FILE_RAG);
+      
       console.log('Enviando solicitação para excluir arquivo:', title);
       
-      const response = await fetch('https://webhook.n8nlabz.com.br/webhook/excluir-arquivo-rag', {
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -145,9 +150,12 @@ export const useDocuments = () => {
   // New function to clear all documents
   const clearAllDocuments = async () => {
     try {
+      // Usar o serviço de webhook para obter a URL
+      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.CLEAR_RAG);
+      
       console.log('Enviando solicitação para excluir toda a base de conhecimento');
       
-      const response = await fetch('https://webhook.n8nlabz.com.br/webhook/excluir-rag', {
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -180,13 +188,16 @@ export const useDocuments = () => {
   // Upload file to webhook
   const uploadFileToWebhook = async (file: File, category: string) => {
     try {
+      // Usar o serviço de webhook para obter a URL
+      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.UPLOAD_RAG);
+      
       const formData = new FormData();
       formData.append('file', file);
       formData.append('category', category);
 
       console.log('Enviando arquivo para o webhook:', file.name, 'categoria:', category);
       
-      const response = await fetch('https://webhook.n8nlabz.com.br/webhook/envia_rag', {
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         body: formData,
       });

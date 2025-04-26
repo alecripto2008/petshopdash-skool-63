@@ -13,6 +13,10 @@ const DEFAULT_WEBHOOKS = {
   [WEBHOOK_IDENTIFIERS.CREATE_EVOLUTION_INSTANCE]: 'https://webhook.n8nlabz.com.br/webhook/instanciaevolution',
   [WEBHOOK_IDENTIFIERS.UPDATE_QR_CODE]: 'https://webhook.n8nlabz.com.br/webhook/atualizar-qr-code',
   [WEBHOOK_IDENTIFIERS.CONFIRM_EVOLUTION]: 'https://webhook.n8nlabz.com.br/webhook/confirma',
+  [WEBHOOK_IDENTIFIERS.CREATE_USER]: 'https://webhook.n8nlabz.com.br/webhook/cria_usuario',
+  [WEBHOOK_IDENTIFIERS.UPDATE_USER]: 'https://webhook.n8nlabz.com.br/webhook/edita_usuario',
+  [WEBHOOK_IDENTIFIERS.DELETE_USER]: 'https://webhook.n8nlabz.com.br/webhook/exclui_usuario',
+  [WEBHOOK_IDENTIFIERS.CONFIG_AGENT]: 'https://webhook.n8nlabz.com.br/webhook/config_agent'
 };
 
 // Cache para as URLs dos webhooks
