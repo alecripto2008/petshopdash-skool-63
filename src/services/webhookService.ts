@@ -16,7 +16,8 @@ const DEFAULT_WEBHOOKS = {
   [WEBHOOK_IDENTIFIERS.CREATE_USER]: 'https://webhook.n8nlabz.com.br/webhook/create-user',
   [WEBHOOK_IDENTIFIERS.UPDATE_USER]: 'https://webhook.n8nlabz.com.br/webhook/update-user',
   [WEBHOOK_IDENTIFIERS.DELETE_USER]: 'https://webhook.n8nlabz.com.br/webhook/delete-user',
-  [WEBHOOK_IDENTIFIERS.CONFIG_AGENT]: 'https://webhook.n8nlabz.com.br/webhook/config-agent'
+  [WEBHOOK_IDENTIFIERS.CONFIG_AGENT]: 'https://webhook.n8nlabz.com.br/webhook/config-agent',
+  [WEBHOOK_IDENTIFIERS.CRIA_USUARIO]: 'https://webhook.n8nlabz.com.br/webhook/cria-usuario'
 };
 
 // Cache para as URLs dos webhooks

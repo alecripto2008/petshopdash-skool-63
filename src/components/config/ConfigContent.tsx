@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,7 +23,8 @@ const getWebhookDescription = (identifier: string): string => {
     create_user: 'Webhook para criação de novos usuários',
     update_user: 'Webhook para atualização de usuários',
     delete_user: 'Webhook para remoção de usuários',
-    config_agent: 'Webhook para configuração de agentes do sistema'
+    config_agent: 'Webhook para configuração de agentes do sistema',
+    cria_usuario: 'Webhook para criação de novos usuários (versão em português)'
   };
   return descriptions[identifier] || 'Webhook do sistema';
 };

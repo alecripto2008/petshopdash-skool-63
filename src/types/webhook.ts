@@ -23,5 +23,6 @@ export const WEBHOOK_IDENTIFIERS = {
   CREATE_USER: 'create_user',
   UPDATE_USER: 'update_user',
   DELETE_USER: 'delete_user',
-  CONFIG_AGENT: 'config_agent'
+  CONFIG_AGENT: 'config_agent',
+  CRIA_USUARIO: 'cria_usuario' // Adicionando webhook específico para criação de usuários em português
 }
