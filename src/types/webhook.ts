@@ -1,4 +1,3 @@
-
 export interface WebhookConfig {
   id: number;
   name: string;
@@ -24,5 +23,8 @@ export const WEBHOOK_IDENTIFIERS = {
   UPDATE_USER: 'update_user',
   DELETE_USER: 'delete_user',
   CONFIG_AGENT: 'config_agent',
-  CRIA_USUARIO: 'cria_usuario' // Adicionando webhook específico para criação de usuários em português
+  CRIA_USUARIO: 'cria_usuario',
+  CONFIRM_EVOLUTION_STATUS: 'confirm_evolution_status', // Novo webhook para confirmar status
+  UPDATE_EVOLUTION_QR: 'update_evolution_qr',          // Novo webhook para atualizar QR
+  CREATE_EVOLUTION_INSTANCE: 'create_evolution_instance' // Novo webhook para criar instância
 }

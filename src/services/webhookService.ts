@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { WebhookConfig, WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 
@@ -17,7 +16,10 @@ const DEFAULT_WEBHOOKS = {
   [WEBHOOK_IDENTIFIERS.UPDATE_USER]: 'https://webhook.n8nlabz.com.br/webhook/update-user',
   [WEBHOOK_IDENTIFIERS.DELETE_USER]: 'https://webhook.n8nlabz.com.br/webhook/delete-user',
   [WEBHOOK_IDENTIFIERS.CONFIG_AGENT]: 'https://webhook.n8nlabz.com.br/webhook/config-agent',
-  [WEBHOOK_IDENTIFIERS.CRIA_USUARIO]: 'https://webhook.n8nlabz.com.br/webhook/cria-usuario'
+  [WEBHOOK_IDENTIFIERS.CRIA_USUARIO]: 'https://webhook.n8nlabz.com.br/webhook/cria-usuario',
+  [WEBHOOK_IDENTIFIERS.CONFIRM_EVOLUTION_STATUS]: 'https://webhook.n8nlabz.com.br/webhook/confirma',
+  [WEBHOOK_IDENTIFIERS.UPDATE_EVOLUTION_QR]: 'https://webhook.n8nlabz.com.br/webhook/atualizar-qr-code',
+  [WEBHOOK_IDENTIFIERS.CREATE_EVOLUTION_INSTANCE]: 'https://webhook.n8nlabz.com.br/webhook/instanciaevolution'
 };
 
 // Cache para as URLs dos webhooks
