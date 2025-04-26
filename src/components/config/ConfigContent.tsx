@@ -140,13 +140,15 @@ const ConfigContent = () => {
   return (
     <div className="space-y-6">
       <WebhooksHeader onRefresh={fetchConfigs} />
-      {configs.map((config) => (
-        <WebhookCard
-          key={config.id}
-          config={config}
-          onUpdateUrl={handleUpdateConfig}
-        />
-      ))}
+      <div className="grid gap-6">
+        {configs.map((config) => (
+          <WebhookCard
+            key={config.id}
+            config={config}
+            onUpdateUrl={handleUpdateConfig}
+          />
+        ))}
+      </div>
     </div>
   );
 };
