@@ -8,6 +8,9 @@ const PaymentsManager = () => {
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       <DashboardHeader />
       <main className="container mx-auto px-4 py-8">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">
+          Gestão de Pagamentos
+        </h2>
         <PaymentsContent />
       </main>
     </div>
