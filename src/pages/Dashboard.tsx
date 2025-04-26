@@ -11,6 +11,7 @@ import ClientsCard from '@/components/dashboard/ClientsCard';
 import EvolutionCard from '@/components/dashboard/EvolutionCard';
 import ScheduleCard from '@/components/dashboard/ScheduleCard';
 import ProductsCard from '@/components/dashboard/ProductsCard';
+import PaymentsCard from '@/components/dashboard/PaymentsCard';
 
 const Dashboard = () => {
   const { user, isLoading } = useAuth();
@@ -50,6 +51,7 @@ const Dashboard = () => {
           <EvolutionCard />
           <ScheduleCard />
           <ProductsCard />
+          <PaymentsCard />
         </div>
       </main>
     </div>

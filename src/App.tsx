@@ -13,6 +13,7 @@ import Evolution from "./pages/Evolution";
 import Schedule from "./pages/Schedule";
 import NotFound from "./pages/NotFound";
 import ProductsManager from "./pages/ProductsManager";
+import PaymentsManager from "./pages/PaymentsManager";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/evolution" element={<Evolution />} />
               <Route path="/schedule" element={<Schedule />} />
               <Route path="/products" element={<ProductsManager />} />
+              <Route path="/payments" element={<PaymentsManager />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>
