@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { WebhookConfig } from '@/types/webhook';
 import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 import { loadWebhooks, clearWebhookCache } from '@/services/webhookService';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, AlertCircle } from 'lucide-react';
 
 const ConfigContent = () => {
   const [configs, setConfigs] = useState<WebhookConfig[]>([]);
@@ -40,29 +40,37 @@ const ConfigContent = () => {
       );
       
       if (missingWebhooks.length > 0) {
-        const defaultWebhooks: { name: string; url: string; description: string; identifier: string }[] = missingWebhooks.map(([name, identifier]) => {
+        console.log("Missing webhooks:", missingWebhooks);
+        
+        // Criar webhooks faltantes um por um para evitar problemas
+        for (const [name, identifier] of missingWebhooks) {
           const readableName = name.toLowerCase().split('_').map(
             word => word.charAt(0).toUpperCase() + word.slice(1)
           ).join(' ');
           
-          const defaultUrl = `https://webhook.n8nlabz.com.br/webhook/${identifier.replace(/_/g, '-')}`;
+          const defaultUrlPath = identifier.replace(/_/g, '-');
+          const defaultUrl = `https://webhook.n8nlabz.com.br/webhook/${defaultUrlPath}`;
           
-          return {
+          const newWebhook = {
             name: readableName,
             url: defaultUrl,
             description: `URL para ${readableName}`,
             identifier: identifier
           };
-        });
-        
-        // Insere os webhooks faltantes
-        for (const webhook of defaultWebhooks) {
+          
+          console.log("Inserting webhook:", newWebhook);
+          
           const { error: insertError } = await supabase
             .from('webhook_configs')
-            .insert(webhook);
+            .insert(newWebhook);
             
           if (insertError) {
-            console.error(`Erro ao inserir webhook ${webhook.name}:`, insertError);
+            console.error(`Erro ao inserir webhook ${newWebhook.name}:`, insertError);
+            toast({
+              title: "Erro ao inserir webhook",
+              description: `Não foi possível inserir o webhook ${newWebhook.name}`,
+              variant: "destructive",
+            });
           }
         }
         
@@ -74,6 +82,8 @@ const ConfigContent = () => {
           
         if (!refreshError) {
           existingWebhooks = refreshedData as WebhookConfig[];
+        } else {
+          console.error("Erro ao recarregar webhooks:", refreshError);
         }
       }
       
@@ -127,6 +137,23 @@ const ConfigContent = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="h-8 w-8 border-4 border-t-transparent border-blue-500 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  // Verificar se há webhooks registrados
+  if (configs.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <AlertCircle className="h-12 w-12 text-amber-500" />
+        <h3 className="text-lg font-medium">Nenhum webhook encontrado</h3>
+        <p className="text-center text-muted-foreground">
+          Não foram encontrados webhooks configurados no sistema.
+        </p>
+        <Button onClick={fetchConfigs} className="flex items-center gap-2">
+          <RefreshCw className="h-4 w-4" />
+          Tentar novamente
+        </Button>
       </div>
     );
   }

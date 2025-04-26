@@ -20,8 +20,8 @@ export const WEBHOOK_IDENTIFIERS = {
   CREATE_EVOLUTION_INSTANCE: 'create_evolution_instance',
   UPDATE_QR_CODE: 'update_qr_code',
   CONFIRM_EVOLUTION: 'confirm_evolution',
-  CREATE_USER: 'cria_usuario',
-  UPDATE_USER: 'edita_usuario',
-  DELETE_USER: 'exclui_usuario',
+  CREATE_USER: 'create_user',
+  UPDATE_USER: 'update_user',
+  DELETE_USER: 'delete_user',
   CONFIG_AGENT: 'config_agent'
 }
