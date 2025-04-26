@@ -1,24 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import type { WebhookConfig } from '@/types/webhook';
 import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 import { loadWebhooks, clearWebhookCache } from '@/services/webhookService';
-import { RefreshCw, AlertCircle } from 'lucide-react';
+import { LoadingSpinner } from './LoadingSpinner';
+import { EmptyWebhooksState } from './EmptyWebhooksState';
+import { WebhookCard } from './WebhookCard';
+import { WebhooksHeader } from './WebhooksHeader';
 
 const ConfigContent = () => {
   const [configs, setConfigs] = useState<WebhookConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-
-  useEffect(() => {
-    fetchConfigs();
-  }, []);
 
   const fetchConfigs = async () => {
     try {
@@ -34,20 +29,16 @@ const ConfigContent = () => {
       
       console.log("Existing webhooks:", data);
       
-      // Verifica se todos os webhooks necessários existem
       let existingWebhooks = data as WebhookConfig[];
       const webhookIdentifiers = new Set(existingWebhooks.map(w => w.identifier));
       
-      // Se algum webhook não estiver cadastrado, prepara para inserir
       const missingWebhooks = Object.entries(WEBHOOK_IDENTIFIERS).filter(
         ([_, identifier]) => !webhookIdentifiers.has(identifier)
       );
       
       if (missingWebhooks.length > 0) {
         console.log("Missing webhooks:", missingWebhooks);
-        console.log("Creating missing webhooks...");
         
-        // Criar webhooks faltantes um por um para evitar problemas
         for (const [name, identifier] of missingWebhooks) {
           const readableName = name.toLowerCase().split('_').map(
             word => word.charAt(0).toUpperCase() + word.slice(1)
@@ -63,9 +54,7 @@ const ConfigContent = () => {
             identifier: identifier
           };
           
-          console.log("Inserting webhook:", newWebhook);
-          
-          const { error: insertError, data: insertedData } = await supabase
+          const { error: insertError } = await supabase
             .from('webhook_configs')
             .insert(newWebhook)
             .select();
@@ -77,29 +66,20 @@ const ConfigContent = () => {
               description: `Não foi possível inserir o webhook ${newWebhook.name}`,
               variant: "destructive",
             });
-          } else {
-            console.log(`Webhook ${newWebhook.name} inserido com sucesso:`, insertedData);
           }
         }
         
-        // Recarrega para obter os novos webhooks
-        console.log("Reloading webhooks after insertion...");
         const { data: refreshedData, error: refreshError } = await supabase
           .from('webhook_configs')
           .select('*')
           .order('name');
           
         if (!refreshError) {
-          console.log("Refreshed webhooks:", refreshedData);
           existingWebhooks = refreshedData as WebhookConfig[];
-        } else {
-          console.error("Erro ao recarregar webhooks:", refreshError);
         }
       }
       
       setConfigs(existingWebhooks);
-      
-      // Limpa o cache para que os novos valores sejam usados
       clearWebhookCache();
       await loadWebhooks();
 
@@ -133,10 +113,7 @@ const ConfigContent = () => {
         description: "A configuração foi atualizada com sucesso.",
       });
       
-      // Limpa o cache para que os novos valores sejam usados
       clearWebhookCache();
-      
-      // Refresh configs after update
       await fetchConfigs();
     } catch (error) {
       console.error('Error updating config:', error);
@@ -148,74 +125,27 @@ const ConfigContent = () => {
     }
   };
 
+  useEffect(() => {
+    fetchConfigs();
+  }, []);
+
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="h-8 w-8 border-4 border-t-transparent border-blue-500 rounded-full animate-spin"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
-  // Verificar se há webhooks registrados
   if (configs.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <AlertCircle className="h-12 w-12 text-amber-500" />
-        <h3 className="text-lg font-medium">Nenhum webhook encontrado</h3>
-        <p className="text-center text-muted-foreground">
-          Não foram encontrados webhooks configurados no sistema.
-        </p>
-        <Button onClick={fetchConfigs} className="flex items-center gap-2">
-          <RefreshCw className="h-4 w-4" />
-          Tentar novamente
-        </Button>
-      </div>
-    );
+    return <EmptyWebhooksState onRefresh={fetchConfigs} />;
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">URLs de Webhook</h3>
-        <Button variant="outline" size="sm" onClick={fetchConfigs} className="flex items-center gap-2">
-          <RefreshCw className="h-4 w-4" />
-          Atualizar
-        </Button>
-      </div>
-      
+      <WebhooksHeader onRefresh={fetchConfigs} />
       {configs.map((config) => (
-        <Card key={config.id}>
-          <CardHeader>
-            <CardTitle className="text-xl">{config.name}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Label>Descrição</Label>
-                <p className="text-sm text-muted-foreground mt-1">{config.description}</p>
-              </div>
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <Label>URL</Label>
-                  <div className="flex gap-2 mt-1">
-                    <Input
-                      defaultValue={config.url}
-                      onBlur={(e) => handleUpdateConfig(config.id, e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-              {config.identifier && (
-                <div>
-                  <Label>Identificador</Label>
-                  <p className="text-xs font-mono bg-gray-100 dark:bg-gray-800 p-1 rounded mt-1">
-                    {config.identifier}
-                  </p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <WebhookCard
+          key={config.id}
+          config={config}
+          onUpdateUrl={handleUpdateConfig}
+        />
       ))}
     </div>
   );
