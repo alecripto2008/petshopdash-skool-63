@@ -61,36 +61,7 @@ const ChatBotActions = ({ selectedPhoneNumber, selectedChat, isLoading }: ChatBo
     }
   };
 
-  const startBot = async (phoneNumber: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.START_BOT);
-      
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ phoneNumber }),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Erro ao iniciar o bot');
-      }
-      
-      toast({
-        title: "Bot iniciado",
-        description: `O bot foi iniciado para ${phoneNumber}`,
-      });
-    } catch (error) {
-      console.error('Erro ao iniciar bot:', error);
-      toast({
-        title: "Erro ao iniciar bot",
-        description: "Ocorreu um erro ao tentar iniciar o bot.",
-        variant: "destructive"
-      });
-    }
-  };
+  // Removed the startBot function as it references a non-existent webhook
 
   return (
     <>

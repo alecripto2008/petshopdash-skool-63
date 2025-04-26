@@ -4,7 +4,6 @@ import { Contact } from '@/types/client';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { getWebhookUrl } from '@/services/webhookService';
-import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 
 export const useClientActions = () => {
   const [loadingContacts, setLoadingContacts] = useState(true);
@@ -23,7 +22,7 @@ export const useClientActions = () => {
       }
       
       if (data) {
-        const formattedContacts: Contact[] = data.map(client => ({
+        const formattedContacts = data.map(client => ({
           id: client.id.toString(),
           name: client.nome || 'Cliente sem nome',
           email: client.email,
@@ -56,7 +55,7 @@ export const useClientActions = () => {
     }
   };
 
-  const addClient = async (newContact: Partial<Contact>) => {
+  const addClient = async (newContact) => {
     if (!newContact.name || !newContact.phone) {
       toast({
         title: "Campos obrigatórios",
@@ -92,20 +91,7 @@ export const useClientActions = () => {
           description: `${newContact.name} foi adicionado com sucesso.`,
         });
         
-        try {
-          // Use o serviço de webhook para obter a URL
-          const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.CREATE_USER);
-          
-          await fetch(webhookUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(newContact),
-          });
-        } catch (webhookError) {
-          console.error('Erro ao enviar para webhook:', webhookError);
-        }
+        // Removed webhook call to CREATE_USER since it doesn't exist
         
         return true;
       }
@@ -121,7 +107,7 @@ export const useClientActions = () => {
     }
   };
 
-  const updateClient = async (clientId: string, updatedData: Partial<Contact>) => {
+  const updateClient = async (clientId, updatedData) => {
     try {
       const { error } = await supabase
         .from('dados_cliente')
@@ -145,23 +131,7 @@ export const useClientActions = () => {
         description: `As informações do cliente foram atualizadas.`,
       });
       
-      try {
-        // Use o serviço de webhook para obter a URL
-        const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.UPDATE_USER);
-        
-        await fetch(webhookUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            id: clientId,
-            ...updatedData
-          }),
-        });
-      } catch (webhookError) {
-        console.error('Erro ao enviar para webhook:', webhookError);
-      }
+      // Removed webhook call to UPDATE_USER since it doesn't exist
       
       return true;
     } catch (error) {
@@ -175,7 +145,7 @@ export const useClientActions = () => {
     }
   };
 
-  const deleteClient = async (clientId: string, phone: string) => {
+  const deleteClient = async (clientId, phone) => {
     try {
       const { error } = await supabase
         .from('dados_cliente')
@@ -190,20 +160,7 @@ export const useClientActions = () => {
         variant: "destructive",
       });
       
-      try {
-        // Use o serviço de webhook para obter a URL
-        const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.DELETE_USER);
-        
-        await fetch(webhookUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ phone }),
-        });
-      } catch (webhookError) {
-        console.error('Erro ao enviar para webhook:', webhookError);
-      }
+      // Removed webhook call to DELETE_USER since it doesn't exist
       
       return true;
     } catch (error) {

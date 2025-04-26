@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Link, PawPrint, Plus, QrCode } from 'lucide-react';
@@ -19,7 +20,7 @@ const Evolution = () => {
     isLoading,
     qrCodeData,
     confirmationStatus,
-    retryCountRef,
+    retryCount,
     maxRetries,
     handleCreateInstance,
     handleTryAgain,
@@ -78,7 +79,7 @@ const Evolution = () => {
                   confirmationStatus={confirmationStatus}
                   instanceName={instanceName}
                   isLoading={isLoading}
-                  retryCount={retryCountRef.current}
+                  retryCount={retryCount}
                   maxRetries={maxRetries}
                   onTryAgain={handleTryAgain}
                   onReset={resetQrCode}

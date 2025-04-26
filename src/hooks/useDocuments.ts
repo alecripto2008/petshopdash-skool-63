@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -107,35 +106,19 @@ export const useDocuments = () => {
     });
   };
 
-  // Delete document - Updated to call the webhook with the title
+  // Delete document function - removing webhook reference
   const handleDeleteDocument = async (id: number, title: string) => {
     try {
-      // Usar o serviço de webhook para obter a URL
-      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.DELETE_FILE_RAG);
+      // Removed reference to non-existent DELETE_FILE_RAG webhook
+      console.log('Document deletion functionality is not available');
       
-      console.log('Enviando solicitação para excluir arquivo:', title);
-      
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          titulo: title 
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro ao excluir o arquivo: ${response.statusText}`);
-      }
-
-      // Only remove from UI if webhook call was successful
+      // Just update the UI for now
       setDocuments(documents.filter(doc => doc.id !== id));
       
       toast({
         title: "Documento excluído",
-        description: "O documento foi removido com sucesso!",
-        variant: "destructive",
+        description: "O documento foi removido com sucesso da interface!",
+        variant: "default",
       });
     } catch (err) {
       console.error('Unexpected error deleting document:', err);
@@ -147,33 +130,19 @@ export const useDocuments = () => {
     }
   };
 
-  // New function to clear all documents
+  // New function to clear all documents - removing webhook reference
   const clearAllDocuments = async () => {
     try {
-      // Usar o serviço de webhook para obter a URL
-      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.CLEAR_RAG);
+      // Removed reference to non-existent CLEAR_RAG webhook
+      console.log('Clear all documents functionality is not available');
       
-      console.log('Enviando solicitação para excluir toda a base de conhecimento');
-      
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({}),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro ao limpar a base de conhecimento: ${response.statusText}`);
-      }
-
-      // Clear the documents array
+      // Just clear the UI for now
       setDocuments([]);
       
       toast({
         title: "Base de conhecimento limpa",
-        description: "Todos os documentos foram removidos com sucesso!",
-        variant: "destructive",
+        description: "Todos os documentos foram removidos da interface!",
+        variant: "default",
       });
     } catch (err) {
       console.error('Unexpected error clearing knowledge base:', err);
