@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Link, PawPrint, Plus, QrCode } from 'lucide-react';
@@ -9,7 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { QrCodeSection } from '@/components/evolution/QrCodeSection';
 import { InstanceForm } from '@/components/evolution/InstanceForm';
-import { useEvolution } from '@/hooks/useEvolution';
+import { useEvolution } from '@/hooks/evolution/useEvolution';
 
 const Evolution = () => {
   const navigate = useNavigate();
