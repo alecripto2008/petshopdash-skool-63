@@ -4,19 +4,19 @@ import { WebhookConfig, WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 
 // URLs padrão para fallback caso não estejam no banco
 const DEFAULT_WEBHOOKS = {
-  [WEBHOOK_IDENTIFIERS.SEND_MESSAGE]: 'https://webhook.n8nlabz.com.br/webhook/envia_mensagem',
-  [WEBHOOK_IDENTIFIERS.PAUSE_BOT]: 'https://webhook.n8nlabz.com.br/webhook/pausa_bot',
-  [WEBHOOK_IDENTIFIERS.START_BOT]: 'https://webhook.n8nlabz.com.br/webhook/inicia_bot',
-  [WEBHOOK_IDENTIFIERS.UPLOAD_RAG]: 'https://webhook.n8nlabz.com.br/webhook/envia_rag',
-  [WEBHOOK_IDENTIFIERS.DELETE_FILE_RAG]: 'https://webhook.n8nlabz.com.br/webhook/excluir-arquivo-rag',
-  [WEBHOOK_IDENTIFIERS.CLEAR_RAG]: 'https://webhook.n8nlabz.com.br/webhook/excluir-rag',
-  [WEBHOOK_IDENTIFIERS.CREATE_EVOLUTION_INSTANCE]: 'https://webhook.n8nlabz.com.br/webhook/instanciaevolution',
-  [WEBHOOK_IDENTIFIERS.UPDATE_QR_CODE]: 'https://webhook.n8nlabz.com.br/webhook/atualizar-qr-code',
-  [WEBHOOK_IDENTIFIERS.CONFIRM_EVOLUTION]: 'https://webhook.n8nlabz.com.br/webhook/confirma',
-  [WEBHOOK_IDENTIFIERS.CREATE_USER]: 'https://webhook.n8nlabz.com.br/webhook/cria_usuario',
-  [WEBHOOK_IDENTIFIERS.UPDATE_USER]: 'https://webhook.n8nlabz.com.br/webhook/edita_usuario',
-  [WEBHOOK_IDENTIFIERS.DELETE_USER]: 'https://webhook.n8nlabz.com.br/webhook/exclui_usuario',
-  [WEBHOOK_IDENTIFIERS.CONFIG_AGENT]: 'https://webhook.n8nlabz.com.br/webhook/config_agent'
+  [WEBHOOK_IDENTIFIERS.SEND_MESSAGE]: 'https://webhook.n8nlabz.com.br/webhook/send-message',
+  [WEBHOOK_IDENTIFIERS.PAUSE_BOT]: 'https://webhook.n8nlabz.com.br/webhook/pause-bot',
+  [WEBHOOK_IDENTIFIERS.START_BOT]: 'https://webhook.n8nlabz.com.br/webhook/start-bot',
+  [WEBHOOK_IDENTIFIERS.UPLOAD_RAG]: 'https://webhook.n8nlabz.com.br/webhook/upload-rag',
+  [WEBHOOK_IDENTIFIERS.DELETE_FILE_RAG]: 'https://webhook.n8nlabz.com.br/webhook/delete-file-rag',
+  [WEBHOOK_IDENTIFIERS.CLEAR_RAG]: 'https://webhook.n8nlabz.com.br/webhook/clear-rag',
+  [WEBHOOK_IDENTIFIERS.CREATE_EVOLUTION_INSTANCE]: 'https://webhook.n8nlabz.com.br/webhook/create-evolution-instance',
+  [WEBHOOK_IDENTIFIERS.UPDATE_QR_CODE]: 'https://webhook.n8nlabz.com.br/webhook/update-qr-code',
+  [WEBHOOK_IDENTIFIERS.CONFIRM_EVOLUTION]: 'https://webhook.n8nlabz.com.br/webhook/confirm-evolution',
+  [WEBHOOK_IDENTIFIERS.CREATE_USER]: 'https://webhook.n8nlabz.com.br/webhook/create-user',
+  [WEBHOOK_IDENTIFIERS.UPDATE_USER]: 'https://webhook.n8nlabz.com.br/webhook/update-user',
+  [WEBHOOK_IDENTIFIERS.DELETE_USER]: 'https://webhook.n8nlabz.com.br/webhook/delete-user',
+  [WEBHOOK_IDENTIFIERS.CONFIG_AGENT]: 'https://webhook.n8nlabz.com.br/webhook/config-agent'
 };
 
 // Cache para as URLs dos webhooks
@@ -27,6 +27,7 @@ let webhookCache: Record<string, string> | null = null;
  */
 export async function loadWebhooks(): Promise<Record<string, string>> {
   try {
+    console.log("Loading webhooks from database...");
     const { data, error } = await supabase
       .from('webhook_configs')
       .select('*')
@@ -38,6 +39,8 @@ export async function loadWebhooks(): Promise<Record<string, string>> {
 
     const webhooks = data as WebhookConfig[];
     const webhookMap: Record<string, string> = {};
+
+    console.log("Loaded webhooks:", webhooks);
 
     // Mapeia os webhooks pelo identificador
     webhooks.forEach(webhook => {

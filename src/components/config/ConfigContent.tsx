@@ -23,12 +23,16 @@ const ConfigContent = () => {
   const fetchConfigs = async () => {
     try {
       setIsLoading(true);
+      console.log("Fetching webhook configurations...");
+      
       const { data, error } = await supabase
         .from('webhook_configs')
         .select('*')
         .order('name');
 
       if (error) throw error;
+      
+      console.log("Existing webhooks:", data);
       
       // Verifica se todos os webhooks necessários existem
       let existingWebhooks = data as WebhookConfig[];
@@ -41,6 +45,7 @@ const ConfigContent = () => {
       
       if (missingWebhooks.length > 0) {
         console.log("Missing webhooks:", missingWebhooks);
+        console.log("Creating missing webhooks...");
         
         // Criar webhooks faltantes um por um para evitar problemas
         for (const [name, identifier] of missingWebhooks) {
@@ -60,9 +65,10 @@ const ConfigContent = () => {
           
           console.log("Inserting webhook:", newWebhook);
           
-          const { error: insertError } = await supabase
+          const { error: insertError, data: insertedData } = await supabase
             .from('webhook_configs')
-            .insert(newWebhook);
+            .insert(newWebhook)
+            .select();
             
           if (insertError) {
             console.error(`Erro ao inserir webhook ${newWebhook.name}:`, insertError);
@@ -71,16 +77,20 @@ const ConfigContent = () => {
               description: `Não foi possível inserir o webhook ${newWebhook.name}`,
               variant: "destructive",
             });
+          } else {
+            console.log(`Webhook ${newWebhook.name} inserido com sucesso:`, insertedData);
           }
         }
         
         // Recarrega para obter os novos webhooks
+        console.log("Reloading webhooks after insertion...");
         const { data: refreshedData, error: refreshError } = await supabase
           .from('webhook_configs')
           .select('*')
           .order('name');
           
         if (!refreshError) {
+          console.log("Refreshed webhooks:", refreshedData);
           existingWebhooks = refreshedData as WebhookConfig[];
         } else {
           console.error("Erro ao recarregar webhooks:", refreshError);
@@ -92,6 +102,11 @@ const ConfigContent = () => {
       // Limpa o cache para que os novos valores sejam usados
       clearWebhookCache();
       await loadWebhooks();
+
+      toast({
+        title: "Configurações carregadas",
+        description: "Webhooks carregados com sucesso!",
+      });
     } catch (error) {
       console.error('Error fetching configs:', error);
       toast({
