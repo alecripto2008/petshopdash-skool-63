@@ -16,6 +16,7 @@ import ProductsManager from "./pages/ProductsManager";
 import PaymentsManager from "./pages/PaymentsManager";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import ConfigManager from "./pages/ConfigManager";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/schedule" element={<Schedule />} />
               <Route path="/products" element={<ProductsManager />} />
               <Route path="/payments" element={<PaymentsManager />} />
+              <Route path="/config" element={<ConfigManager />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>

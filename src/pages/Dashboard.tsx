@@ -52,6 +52,7 @@ const Dashboard = () => {
           <ScheduleCard />
           <ProductsCard />
           <PaymentsCard />
+          <ConfigCard />
         </div>
       </main>
     </div>
