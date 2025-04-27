@@ -30,7 +30,7 @@ const PaymentsCard = () => {
           </div>
         </div>
         <p className="text-gray-600 dark:text-green-300 text-center">
-          Gerencie pagamentos, transações e relatórios financeiros.
+          Gerencie pagamentos e transações financeiras.
         </p>
       </CardContent>
       <CardFooter className="bg-green-50 dark:bg-green-900/50 rounded-b-lg border-t dark:border-green-800 flex justify-center py-3">
@@ -43,4 +43,3 @@ const PaymentsCard = () => {
 };
 
 export default PaymentsCard;
-
