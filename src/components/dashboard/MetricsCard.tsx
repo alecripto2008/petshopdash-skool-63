@@ -33,7 +33,7 @@ const MetricsCard = () => {
         </div>
         <div className="space-y-3">
           <div className="flex items-center justify-center">
-            <span className="text-sm text-gray-600 dark:text-gray-300">Análise e estatística de indicadores disponiveis</span>
+            <p className="text-sm text-gray-600 dark:text-gray-300">Análise e estatística de indicadores disponiveis</p>
           </div>
         </div>
       </CardContent>
