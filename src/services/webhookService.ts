@@ -7,7 +7,8 @@ const DEFAULT_WEBHOOKS = {
   [WEBHOOK_IDENTIFIERS.PAUSE_BOT]: 'https://webhook.n8nlabz.com.br/webhook/pause-bot',
   [WEBHOOK_IDENTIFIERS.UPLOAD_RAG]: 'https://webhook.n8nlabz.com.br/webhook/upload-rag',
   [WEBHOOK_IDENTIFIERS.CONFIRM_EVOLUTION_STATUS]: 'https://webhook.n8nlabz.com.br/webhook/confirma',
-  [WEBHOOK_IDENTIFIERS.UPDATE_EVOLUTION_QR]: 'https://webhook.n8nlabz.com.br/webhook/atualizar-qr-code'
+  [WEBHOOK_IDENTIFIERS.UPDATE_EVOLUTION_QR]: 'https://webhook.n8nlabz.com.br/webhook/atualizar-qr-code',
+  [WEBHOOK_IDENTIFIERS.CONFIG_AGENT]: 'https://webhook.n8nlabz.com.br/webhook/config_agent'
 };
 
 // Cache para as URLs dos webhooks

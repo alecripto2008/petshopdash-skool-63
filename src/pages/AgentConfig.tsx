@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { 
@@ -46,6 +46,8 @@ import { useToast } from '@/hooks/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { getWebhookUrl } from '@/services/webhookService';
+import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 
 // Define agent interfaces
 interface Agent {
@@ -177,7 +179,9 @@ const AgentConfig = () => {
 
   const sendAgentDataToWebhook = async (agentData: AgentFormValues) => {
     try {
-      const response = await fetch('https://webhook.n8nlabz.com.br/webhook/config_agent', {
+      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.CONFIG_AGENT);
+      
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
