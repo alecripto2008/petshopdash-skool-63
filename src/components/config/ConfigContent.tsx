@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,16 +6,14 @@ import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 import { loadWebhooks, clearWebhookCache } from '@/services/webhookService';
 import { LoadingSpinner } from './LoadingSpinner';
 import { EmptyWebhooksState } from './EmptyWebhooksState';
+import { Button } from '@/components/ui/button';
 import { WebhookCard } from './WebhookCard';
 import { WebhooksHeader } from './WebhooksHeader';
 
 const getWebhookDescription = (identifier: string): string => {
   const descriptions: Record<string, string> = {
-    send_message: 'Webhook para envio de mensagens do sistema',
     pause_bot: 'Webhook para pausar o bot temporariamente',
     upload_rag: 'Webhook para upload de arquivos na base de conhecimento',
-    create_evolution_instance: 'Webhook para criar uma nova instância do WhatsApp',
-    update_qr_code: 'Webhook para atualizar o QR code do sistema',
     confirm_evolution_status: 'Webhook para confirmar o status da conexão do WhatsApp',
     update_evolution_qr: 'Webhook para atualizar o QR code do WhatsApp'
   };
@@ -42,68 +39,17 @@ const ConfigContent = () => {
       
       console.log("Existing webhooks:", data);
       
-      let existingWebhooks = data as WebhookConfig[];
-      const webhookIdentifiers = new Set(existingWebhooks.map(w => w.identifier));
-      
-      // Encontrar webhooks que faltam ser criados
-      const missingWebhooks = Object.entries(WEBHOOK_IDENTIFIERS).filter(
-        ([_, identifier]) => !webhookIdentifiers.has(identifier)
-      );
-      
-      if (missingWebhooks.length > 0) {
-        console.log("Missing webhooks to be created:", missingWebhooks);
-        
-        for (const [name, identifier] of missingWebhooks) {
-          const readableName = name.toLowerCase().split('_').map(
-            word => word.charAt(0).toUpperCase() + word.slice(1)
-          ).join(' ');
-          
-          const defaultUrlPath = identifier.toLowerCase().replace(/_/g, '-');
-          const defaultUrl = `https://webhook.n8nlabz.com.br/webhook/${defaultUrlPath}`;
-          
-          const newWebhook = {
-            name: readableName,
-            url: defaultUrl,
-            description: getWebhookDescription(identifier.toLowerCase()),
-            identifier: identifier
-          };
-          
-          const { error: insertError } = await supabase
-            .from('webhook_configs')
-            .insert(newWebhook)
-            .select();
-            
-          if (insertError) {
-            console.error(`Error inserting webhook ${newWebhook.name}:`, insertError);
-            toast({
-              title: "Erro ao inserir webhook",
-              description: `Não foi possível inserir o webhook ${newWebhook.name}`,
-              variant: "destructive",
-            });
-          } else {
-            console.log(`Successfully created webhook: ${newWebhook.name}`);
-          }
-        }
-        
-        // Recarregar todos os webhooks após inserir os novos
-        const { data: refreshedData, error: refreshError } = await supabase
-          .from('webhook_configs')
-          .select('*')
-          .order('name');
-          
-        if (!refreshError && refreshedData) {
-          existingWebhooks = refreshedData as WebhookConfig[];
-        }
-      }
-      
-      setConfigs(existingWebhooks);
+      setConfigs(data as WebhookConfig[]);
       clearWebhookCache();
       await loadWebhooks();
 
-      toast({
-        title: "Configurações carregadas",
-        description: "Webhooks carregados com sucesso!",
-      });
+      if (data.length === 0) {
+        toast({
+          title: "Sem configurações",
+          description: "Nenhum webhook configurado no momento.",
+          variant: "destructive"
+        });
+      }
     } catch (error) {
       console.error('Error fetching configs:', error);
       toast({
@@ -115,6 +61,76 @@ const ConfigContent = () => {
       setIsLoading(false);
     }
   };
+
+  const createDefaultWebhooks = async () => {
+    try {
+      const defaultWebhooks = Object.entries(WEBHOOK_IDENTIFIERS).map(([name, identifier]) => {
+        const readableName = name.toLowerCase().split('_').map(
+          word => word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+        
+        const defaultUrl = `https://webhook.n8nlabz.com.br/webhook/${identifier.toLowerCase().replace(/_/g, '-')}`;
+        
+        return {
+          name: readableName,
+          url: defaultUrl,
+          description: getWebhookDescription(identifier),
+          identifier
+        };
+      });
+
+      const { data, error } = await supabase
+        .from('webhook_configs')
+        .insert(defaultWebhooks)
+        .select();
+
+      if (error) throw error;
+
+      toast({
+        title: "Webhooks restaurados",
+        description: "Webhooks padrão foram restaurados com sucesso.",
+      });
+
+      fetchConfigs();
+    } catch (error) {
+      console.error('Error creating default webhooks:', error);
+      toast({
+        title: "Erro ao restaurar webhooks",
+        description: "Não foi possível restaurar os webhooks padrão.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchConfigs();
+  }, []);
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (configs.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="text-center">
+          <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
+            Nenhum Webhook Configurado
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Parece que não há webhooks configurados no momento.
+          </p>
+          <Button 
+            variant="default" 
+            onClick={createDefaultWebhooks}
+            className="mx-auto"
+          >
+            Restaurar Webhooks Padrão
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const handleUpdateConfig = async (id: number, newUrl: string) => {
     try {
@@ -141,18 +157,6 @@ const ConfigContent = () => {
       });
     }
   };
-
-  useEffect(() => {
-    fetchConfigs();
-  }, []);
-
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
-
-  if (configs.length === 0) {
-    return <EmptyWebhooksState onRefresh={fetchConfigs} />;
-  }
 
   return (
     <div className="space-y-6">
