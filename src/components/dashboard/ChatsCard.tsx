@@ -30,7 +30,7 @@ const ChatsCard = () => {
           </div>
         </div>
         <p className="text-gray-600 dark:text-gray-300 text-center">
-          Visualize e responda mensagens de WhatsApp em tempo real.
+          Gerencie o Whatsapp em tempo real.
         </p>
       </CardContent>
       <CardFooter className="bg-gray-50 dark:bg-gray-700/50 rounded-b-lg border-t dark:border-gray-700 flex justify-center py-3">
