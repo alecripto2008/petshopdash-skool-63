@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,7 +33,7 @@ const MetricsCard = () => {
         </div>
         <div className="space-y-3">
           <div className="flex items-center justify-center">
-            <span className="text-sm text-gray-600 dark:text-gray-300">Análise e estatística de indicadores</span>
+            <span className="text-sm text-gray-600 dark:text-gray-300">Análise e estatística de indicadores disponiveis</span>
           </div>
         </div>
       </CardContent>
