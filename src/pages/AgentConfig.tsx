@@ -1,67 +1,18 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
+import { ArrowLeft, Bot, Plus, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { 
-  Form, 
-  FormControl, 
-  FormDescription, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { 
-  Bot, 
-  ArrowLeft, 
-  Plus, 
-  UserPlus, 
-  Trash, 
-  PenLine, 
-  Check, 
-  Info, 
-  X 
-} from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
 import { getWebhookUrl } from '@/services/webhookService';
 import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
-
-// Define agent interfaces
-interface Agent {
-  id: string;
-  name: string;
-  company: string;
-  industry: string;
-  mainProduct: string;
-  strategy: string;
-  personality: string;
-  objective: string;
-  thinkingStyle: string;
-  isActive: boolean;
-}
+import { Agent, AgentFormValues } from '@/types/agent';
+import { ActiveAgentCard } from '@/components/agents/ActiveAgentCard';
+import { AgentForm } from '@/components/agents/AgentForm';
+import { AgentList } from '@/components/agents/AgentList';
+import { AgentDetailsDialog } from '@/components/agents/AgentDetailsDialog';
 
 // Mock data for predefined agents
 const predefinedAgents: Agent[] = [
@@ -103,36 +54,6 @@ const predefinedAgents: Agent[] = [
   }
 ];
 
-// Form schema for creating/editing agents
-const agentFormSchema = z.object({
-  industry: z.string().min(3, {
-    message: "O nicho/indústria deve ter pelo menos 3 caracteres.",
-  }),
-  company: z.string().min(2, {
-    message: "O nome da empresa deve ter pelo menos 2 caracteres.",
-  }),
-  mainProduct: z.string().min(5, {
-    message: "A descrição do produto/serviço deve ter pelo menos 5 caracteres.",
-  }),
-  strategy: z.string().min(10, {
-    message: "A estratégia deve ter pelo menos 10 caracteres.",
-  }),
-  name: z.string().min(2, {
-    message: "O nome do agente deve ter pelo menos 2 caracteres.",
-  }),
-  personality: z.string().min(10, {
-    message: "A descrição da personalidade deve ter pelo menos 10 caracteres.",
-  }),
-  objective: z.string().min(10, {
-    message: "O objetivo deve ter pelo menos 10 caracteres.",
-  }),
-  thinkingStyle: z.string().min(5, {
-    message: "O estilo de pensamento deve ter pelo menos 5 caracteres.",
-  }),
-});
-
-type AgentFormValues = z.infer<typeof agentFormSchema>;
-
 const AgentConfig = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -144,22 +65,8 @@ const AgentConfig = () => {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const form = useForm<AgentFormValues>({
-    resolver: zodResolver(agentFormSchema),
-    defaultValues: {
-      industry: "",
-      company: "",
-      mainProduct: "",
-      strategy: "",
-      name: "",
-      personality: "",
-      objective: "",
-      thinkingStyle: "",
-    },
-  });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isLoading && !user) {
       navigate('/');
     }
@@ -193,7 +100,6 @@ const AgentConfig = () => {
         throw new Error('Falha ao enviar dados do agente para o webhook');
       }
       
-      console.log('Dados do agente enviados com sucesso para o webhook');
       return true;
     } catch (error) {
       console.error('Erro ao enviar dados para o webhook:', error);
@@ -211,24 +117,13 @@ const AgentConfig = () => {
     
     const newAgent: Agent = {
       id: Date.now().toString(),
-      name: data.name,
-      company: data.company,
-      industry: data.industry,
-      mainProduct: data.mainProduct,
-      strategy: data.strategy,
-      personality: data.personality,
-      objective: data.objective,
-      thinkingStyle: data.thinkingStyle,
+      ...data,
       isActive: false
     };
 
-    // Send data to webhook
     await sendAgentDataToWebhook(data);
-    
-    // Update local state regardless of webhook success
     setAgents([...agents, newAgent]);
     setIsNewAgentDialogOpen(false);
-    form.reset();
     setIsSubmitting(false);
     
     toast({
@@ -238,7 +133,6 @@ const AgentConfig = () => {
   };
 
   const handleSelectAgent = (agent: Agent) => {
-    // Set all agents to inactive
     const updatedAgents = agents.map(a => ({
       ...a,
       isActive: a.id === agent.id
@@ -252,12 +146,7 @@ const AgentConfig = () => {
     });
   };
 
-  const handleViewAgentDetails = (agent: Agent) => {
-    setSelectedAgent(agent);
-    setIsAgentDetailsOpen(true);
-  };
-
-  const handleDeleteConfirm = () => {
+  const handleDeleteAgent = () => {
     if (!selectedAgent) return;
     
     setAgents(agents.filter(a => a.id !== selectedAgent.id));
@@ -272,11 +161,6 @@ const AgentConfig = () => {
     });
   };
 
-  const handleCloseNewAgentDialog = () => {
-    form.reset();
-    setIsNewAgentDialogOpen(false);
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
@@ -289,87 +173,47 @@ const AgentConfig = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bot className="h-5 w-5 text-primary" />
-                  Agente Ativo
-                </CardTitle>
-                <CardDescription>
-                  Este é o agente que está sendo usado atualmente
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {agents.find(agent => agent.isActive) ? (
-                  <div className="bg-muted/50 p-4 rounded-lg">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-xl font-medium">
-                          {agents.find(agent => agent.isActive)?.name}
-                        </h3>
-                        <p className="text-muted-foreground">
-                          {agents.find(agent => agent.isActive)?.company} • {agents.find(agent => agent.isActive)?.industry}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1 bg-primary text-primary-foreground px-2 py-1 rounded text-xs">
-                        <Check className="h-3 w-3" />
-                        Ativo
-                      </div>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <p><span className="font-medium">Objetivo:</span> {agents.find(agent => agent.isActive)?.objective}</p>
-                      <p><span className="font-medium">Personalidade:</span> {agents.find(agent => agent.isActive)?.personality}</p>
-                    </div>
-                    <Button variant="outline" size="sm" className="mt-4" onClick={() => handleViewAgentDetails(agents.find(agent => agent.isActive)!)}>
-                      <Info className="mr-2 h-4 w-4" />
-                      Ver detalhes completos
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="text-center p-6">
-                    <Bot className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">Nenhum agente ativo</h3>
-                    <p className="text-muted-foreground mb-4">Selecione um agente da lista ou crie um novo</p>
-                    <Dialog open={isNewAgentDialogOpen} onOpenChange={setIsNewAgentDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button>
-                          <UserPlus className="mr-2 h-4 w-4" />
-                          Criar agente
-                        </Button>
-                      </DialogTrigger>
-                      {/* Dialog content is below */}
-                    </Dialog>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          <ActiveAgentCard
+            activeAgent={agents.find(agent => agent.isActive)}
+            onCreateClick={() => setIsNewAgentDialogOpen(true)}
+            onViewDetails={(agent) => {
+              setSelectedAgent(agent);
+              setIsAgentDetailsOpen(true);
+            }}
+          />
 
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Plus className="h-5 w-5 text-primary" />
-                  Criar Novo Agente
-                </CardTitle>
-                <CardDescription>
-                  Defina um novo assistente personalizado
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex justify-center p-6">
-                <Dialog open={isNewAgentDialogOpen} onOpenChange={setIsNewAgentDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="lg" className="w-full">
-                      <UserPlus className="mr-2 h-5 w-5" />
-                      Novo Agente
-                    </Button>
-                  </DialogTrigger>
-                  {/* Dialog content is below */}
-                </Dialog>
-              </CardContent>
-            </Card>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Plus className="h-5 w-5 text-primary" />
+                Criar Novo Agente
+              </CardTitle>
+              <CardDescription>
+                Defina um novo assistente personalizado
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center p-6">
+              <Dialog open={isNewAgentDialogOpen} onOpenChange={setIsNewAgentDialogOpen}>
+                <Button size="lg" className="w-full" onClick={() => setIsNewAgentDialogOpen(true)}>
+                  <UserPlus className="mr-2 h-5 w-5" />
+                  Novo Agente
+                </Button>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Criar Novo Agente</DialogTitle>
+                    <DialogDescription>
+                      Configure os detalhes do seu novo assistente virtual.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <AgentForm
+                    onSubmit={handleCreateAgent}
+                    onCancel={() => setIsNewAgentDialogOpen(false)}
+                    isSubmitting={isSubmitting}
+                  />
+                </DialogContent>
+              </Dialog>
+            </CardContent>
+          </Card>
         </div>
 
         <Card>
@@ -383,317 +227,28 @@ const AgentConfig = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {agents.map((agent) => (
-                <Card key={agent.id} className={`border ${agent.isActive ? 'border-primary' : ''}`}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg flex justify-between items-center">
-                      <span>{agent.name}</span>
-                      {agent.isActive && (
-                        <div className="flex items-center gap-1 bg-primary text-primary-foreground px-2 py-1 rounded text-xs">
-                          <Check className="h-3 w-3" />
-                          Ativo
-                        </div>
-                      )}
-                    </CardTitle>
-                    <CardDescription>
-                      {agent.company} • {agent.industry}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="text-sm">
-                    <p className="line-clamp-2">{agent.personality}</p>
-                  </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleViewAgentDetails(agent)}
-                    >
-                      <Info className="mr-2 h-3 w-3" />
-                      Detalhes
-                    </Button>
-                    {!agent.isActive && (
-                      <Button 
-                        variant="default" 
-                        size="sm" 
-                        onClick={() => handleSelectAgent(agent)}
-                      >
-                        <Check className="mr-2 h-3 w-3" />
-                        Ativar
-                      </Button>
-                    )}
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
+            <AgentList
+              agents={agents}
+              onSelectAgent={handleSelectAgent}
+              onViewDetails={(agent) => {
+                setSelectedAgent(agent);
+                setIsAgentDetailsOpen(true);
+              }}
+            />
           </CardContent>
         </Card>
 
-        {/* New Agent Dialog */}
-        <Dialog open={isNewAgentDialogOpen} onOpenChange={setIsNewAgentDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Criar Novo Agente</DialogTitle>
-              <DialogDescription>
-                Configure os detalhes do seu novo assistente virtual.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleCreateAgent)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="industry"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Qual é o nicho ou indústria para este prompt?</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: Pet Shop, Imobiliária, Restaurante" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        O setor ou segmento de mercado onde o agente irá atuar.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="company"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Qual é o nome da nova empresa?</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: Pet Paradise, Casa & Lar, Sabor Gourmet" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        O nome da empresa que o agente irá representar.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="mainProduct"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Qual é o principal produto ou serviço oferecido?</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Ex: Produtos para pets, Venda de imóveis, Refeições gourmet" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Os produtos ou serviços que a empresa oferece aos clientes.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="strategy"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Qual é a estratégia para atendimento e vendas?</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Ex: Atendimento personalizado com foco no bem-estar animal" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        A abordagem que o agente deve utilizar para atender e vender.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Qual deve ser o nome do agente?</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: Nina, Carlos, Marina" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        O nome que o assistente virtual usará para se identificar.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="personality"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Quais são os principais traços de personalidade do agente?</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Ex: Amigável, paciente, conhecedor de animais e seus comportamentos" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Como o agente deve se comportar e se comunicar.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="objective"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Qual é o objetivo central do agente?</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Ex: Aumentar vendas e fidelizar clientes com atendimento superior" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        O propósito principal do agente na interação com clientes.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="thinkingStyle"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>O agente deve pensar como quem?</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="Ex: Uma especialista em animais que ama pets" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        A mentalidade ou perspectiva que o agente deve adotar.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={handleCloseNewAgentDialog} disabled={isSubmitting}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? (
-                      <>
-                        <span className="mr-2 h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin"></span>
-                        Criando...
-                      </>
-                    ) : (
-                      'Criar Agente'
-                    )}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+        <AgentDetailsDialog
+          agent={selectedAgent}
+          isOpen={isAgentDetailsOpen}
+          onClose={() => {
+            setIsAgentDetailsOpen(false);
+            setSelectedAgent(null);
+          }}
+          onActivate={handleSelectAgent}
+          onDelete={() => setDeleteConfirmOpen(true)}
+        />
 
-        {/* Agent Details Dialog */}
-        <Dialog open={isAgentDetailsOpen} onOpenChange={setIsAgentDetailsOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Bot className="h-5 w-5" />
-                Detalhes do Agente
-              </DialogTitle>
-            </DialogHeader>
-            
-            {selectedAgent && (
-              <div className="space-y-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-2xl font-bold">{selectedAgent.name}</h2>
-                    <p className="text-muted-foreground">{selectedAgent.company} • {selectedAgent.industry}</p>
-                  </div>
-                  {selectedAgent.isActive && (
-                    <div className="flex items-center gap-1 bg-primary text-primary-foreground px-2 py-1 rounded text-xs">
-                      <Check className="h-3 w-3" />
-                      Ativo
-                    </div>
-                  )}
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <h3 className="font-medium">Produto/Serviço</h3>
-                    <p className="text-sm">{selectedAgent.mainProduct}</p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <h3 className="font-medium">Estratégia</h3>
-                    <p className="text-sm">{selectedAgent.strategy}</p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <h3 className="font-medium">Personalidade</h3>
-                    <p className="text-sm">{selectedAgent.personality}</p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <h3 className="font-medium">Objetivo</h3>
-                    <p className="text-sm">{selectedAgent.objective}</p>
-                  </div>
-                  
-                  <div className="space-y-2 col-span-2">
-                    <h3 className="font-medium">Estilo de Pensamento</h3>
-                    <p className="text-sm">{selectedAgent.thinkingStyle}</p>
-                  </div>
-                </div>
-                
-                <DialogFooter className="gap-2">
-                  {!selectedAgent.isActive && (
-                    <Button 
-                      variant="default" 
-                      onClick={() => {
-                        handleSelectAgent(selectedAgent);
-                        setIsAgentDetailsOpen(false);
-                      }}
-                    >
-                      <Check className="mr-2 h-4 w-4" />
-                      Ativar Agente
-                    </Button>
-                  )}
-                  
-                  <Button 
-                    variant="destructive" 
-                    onClick={() => {
-                      setDeleteConfirmOpen(true);
-                    }}
-                  >
-                    <Trash className="mr-2 h-4 w-4" />
-                    Excluir
-                  </Button>
-                </DialogFooter>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-
-        {/* Delete Confirmation Dialog */}
         <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
           <DialogContent>
             <DialogHeader>
@@ -707,7 +262,7 @@ const AgentConfig = () => {
                 <X className="mr-2 h-4 w-4" />
                 Cancelar
               </Button>
-              <Button variant="destructive" onClick={handleDeleteConfirm}>
+              <Button variant="destructive" onClick={handleDeleteAgent}>
                 <Trash className="mr-2 h-4 w-4" />
                 Excluir
               </Button>
