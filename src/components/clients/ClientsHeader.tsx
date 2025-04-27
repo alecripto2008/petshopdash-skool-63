@@ -27,7 +27,6 @@ const ClientsHeader = () => {
           <h1 className="text-2xl font-bold">Pet Paradise</h1>
         </div>
         <div className="flex items-center gap-4">
-          <h2 className="text-xl">CRM de Clientes</h2>
           <Badge variant="outline" className="bg-white/10 text-white border-0 px-3 py-1">
             {user?.user_metadata?.name || user?.email}
           </Badge>
@@ -39,4 +38,3 @@ const ClientsHeader = () => {
 };
 
 export default ClientsHeader;
-
