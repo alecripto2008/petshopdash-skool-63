@@ -30,7 +30,7 @@ const EvolutionCard = () => {
           </div>
         </div>
         <p className="text-gray-600 dark:text-gray-300 text-center">
-          Conecte e sincronize seu sistema com a plataforma Evolution.
+          Conecte com a Plataforma Evolution
         </p>
       </CardContent>
       <CardFooter className="bg-gray-50 dark:bg-gray-700/50 rounded-b-lg border-t dark:border-gray-700 flex justify-center py-3">
