@@ -30,7 +30,7 @@ const KnowledgeCard = () => {
           </div>
         </div>
         <p className="text-gray-600 dark:text-gray-300 text-center">
-          Gerencie documentos e arquivos da base de conhecimento.
+          Gerencie arquivos da base de conhecimento.
         </p>
       </CardContent>
       <CardFooter className="bg-gray-50 dark:bg-gray-700/50 rounded-b-lg border-t dark:border-gray-700 flex justify-center py-3">
