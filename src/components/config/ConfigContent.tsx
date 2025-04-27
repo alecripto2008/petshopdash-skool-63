@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,9 +14,7 @@ import { AlertCircle } from 'lucide-react';
 const getWebhookDescription = (identifier: string): string => {
   const descriptions: Record<string, string> = {
     pause_bot: 'Webhook para pausar o bot temporariamente',
-    upload_rag: 'Webhook para upload de arquivos na base de conhecimento',
-    confirm_evolution_status: 'Webhook para confirmar o status da conexão do WhatsApp',
-    update_evolution_qr: 'Webhook para atualizar o QR code do WhatsApp'
+    confirm_evolution_status: 'Webhook para confirmar o status da conexão do WhatsApp'
   };
   return descriptions[identifier] || 'Webhook do sistema';
 };
