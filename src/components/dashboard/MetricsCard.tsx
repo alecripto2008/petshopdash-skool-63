@@ -34,8 +34,7 @@ const MetricsCard = () => {
         </div>
         <div className="space-y-3">
           <div className="flex items-center justify-center">
-            <LineChart className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-1" />
-            <span className="text-sm text-gray-600 dark:text-gray-300">Análise de indicadores disponível</span>
+            <span className="text-sm text-gray-600 dark:text-gray-300">Análise e estatística de indicadores</span>
           </div>
         </div>
       </CardContent>
