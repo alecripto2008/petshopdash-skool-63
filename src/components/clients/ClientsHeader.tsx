@@ -2,10 +2,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, PawPrint } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { useAuth } from '@/context/AuthContext';
 
 const ClientsHeader = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <header className="bg-petshop-blue dark:bg-gray-800 text-white shadow-md transition-colors duration-300">
@@ -24,6 +28,10 @@ const ClientsHeader = () => {
         </div>
         <div className="flex items-center gap-4">
           <h2 className="text-xl">CRM de Clientes</h2>
+          <Badge variant="outline" className="bg-white/10 text-white border-0 px-3 py-1">
+            {user?.user_metadata?.name || user?.email}
+          </Badge>
+          <ThemeToggle />
         </div>
       </div>
     </header>
@@ -31,3 +39,4 @@ const ClientsHeader = () => {
 };
 
 export default ClientsHeader;
+
