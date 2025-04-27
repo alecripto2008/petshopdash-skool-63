@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,7 +5,6 @@ import type { WebhookConfig } from '@/types/webhook';
 import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 import { loadWebhooks, clearWebhookCache } from '@/services/webhookService';
 import { LoadingSpinner } from './LoadingSpinner';
-import { EmptyWebhooksState } from './EmptyWebhooksState';
 import { Button } from '@/components/ui/button';
 import { WebhookCard } from './WebhookCard';
 import { WebhooksHeader } from './WebhooksHeader';
@@ -71,7 +69,6 @@ const ConfigContent = () => {
           word => word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' ');
         
-        // Updated default URL pattern without 'create-evolution-instance'
         const defaultUrl = `https://webhook.n8nlabz.com.br/webhook/${identifier.toLowerCase().replace(/_/g, '-')}`;
         
         return {
