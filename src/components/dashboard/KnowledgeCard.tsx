@@ -17,7 +17,7 @@ const KnowledgeCard = () => {
       <CardHeader className="pb-2 bg-gradient-to-r from-amber-500 to-amber-600 dark:from-amber-600 dark:to-amber-700 text-white rounded-t-lg">
         <CardTitle className="flex items-center gap-2">
           <Database className="h-6 w-6" />
-          Gestão de Arquivos
+          Conhecimento
         </CardTitle>
         <CardDescription className="text-amber-100">
           Documentos e arquivos
