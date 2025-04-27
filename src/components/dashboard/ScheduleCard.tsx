@@ -30,7 +30,7 @@ const ScheduleCard = () => {
           </div>
         </div>
         <p className="text-gray-600 dark:text-gray-300 text-center">
-          Consulte e gerencie a agenda de atendimentos e compromissos.
+          Gerencie a agenda de compromissos.
         </p>
       </CardContent>
       <CardFooter className="bg-gray-50 dark:bg-gray-700/50 rounded-b-lg border-t dark:border-gray-700 flex justify-center py-3">
