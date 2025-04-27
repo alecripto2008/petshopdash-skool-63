@@ -1,7 +1,5 @@
 
 import { toast } from '@/hooks/use-toast';
-import { getWebhookUrl } from '@/services/webhookService';
-import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 import { useState } from 'react';
 
 export const useClientMessage = () => {
@@ -10,32 +8,15 @@ export const useClientMessage = () => {
   const sendMessage = async (phone: string, message: string, pauseDuration: number | null) => {
     try {
       setIsSending(true);
-      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.SEND_MESSAGE);
       
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          phone,
-          message,
-          pauseDuration
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Falha ao enviar dados para o webhook');
-      }
-      
+      // Since the webhook URL has been removed, we'll just show a notification
       toast({
-        title: "Mensagem enviada",
-        description: pauseDuration === null 
-          ? `Mensagem enviada sem pausar o bot.` 
-          : `Mensagem enviada e bot pausado por ${pauseDuration} segundos.`,
+        title: "Funcionalidade desativada",
+        description: "A funcionalidade de envio de mensagens foi temporariamente desativada.",
+        variant: "destructive",
       });
       
-      return true;
+      return false;
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
       toast({

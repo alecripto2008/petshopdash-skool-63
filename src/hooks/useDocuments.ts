@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { getWebhookUrl } from '@/services/webhookService';
 import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 
 // Document type definition
@@ -155,36 +154,13 @@ export const useDocuments = () => {
   // Upload file to webhook
   const uploadFileToWebhook = async (file: File, category: string) => {
     try {
-      // Usar o serviço de webhook para obter a URL
-      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.UPLOAD_RAG);
-      
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('category', category);
-
-      console.log('Enviando arquivo para o webhook:', file.name, 'categoria:', category);
-      
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro ao enviar o arquivo: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      console.log('Arquivo enviado com sucesso:', result);
-      
-      // After successful upload, refresh the document list
-      await fetchDocuments();
-      
       toast({
-        title: "Documento adicionado",
-        description: `${file.name} foi adicionado com sucesso!`,
+        title: "Funcionalidade desativada",
+        description: "O upload de documentos foi temporariamente desativado.",
+        variant: "destructive",
       });
       
-      return true;
+      return false;
     } catch (error) {
       console.error('Erro ao enviar o arquivo:', error);
       

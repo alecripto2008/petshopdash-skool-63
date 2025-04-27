@@ -113,7 +113,7 @@ export const QrCodeSection = ({
           </div>
         )}
 
-        {confirmationStatus !== 'confirmed' && (
+        {confirmationStatus !== 'waiting' && confirmationStatus !== 'confirmed' && (
           <Button onClick={onReset} variant="outline" className="mt-4">
             Voltar
           </Button>

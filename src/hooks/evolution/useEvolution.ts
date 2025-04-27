@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getWebhookUrl } from '@/services/webhookService';
 import { useQrCodeUpdate } from './useQrCodeUpdate';
 import { useConnectionStatus } from './useConnectionStatus';
 
@@ -18,10 +17,9 @@ export const useEvolution = () => {
     () => {
       toast({
         title: "Falha na conexão",
-        description: "Não foi possível conectar após várias tentativas. Obtendo novo QR code...",
+        description: "Não foi possível conectar após várias tentativas.",
         variant: "destructive"
       });
-      updateQrCode(instanceName);
     }
   );
 
@@ -40,31 +38,10 @@ export const useEvolution = () => {
     setConfirmationStatus(null);
     
     try {
-      console.log('Creating instance with name:', instanceName);
-      const webhookUrl = await getWebhookUrl('create_evolution_instance');
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          instanceName: instanceName.trim() 
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to create instance');
-      }
-
-      const blob = await response.blob();
-      const qrCodeUrl = URL.createObjectURL(blob);
-      setQrCodeData(qrCodeUrl);
-      setConfirmationStatus('waiting');
-      startChecking();
-      
       toast({
-        title: "Instância criada!",
-        description: "Escaneie o QR code para conectar seu WhatsApp.",
+        title: "Funcionalidade desativada",
+        description: "A criação de instâncias foi temporariamente desativada.",
+        variant: "destructive"
       });
     } catch (error) {
       console.error('Erro ao criar instância:', error);

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Pause, Play } from 'lucide-react';
+import { Pause } from 'lucide-react';
 import PauseDurationDialog from '@/components/PauseDurationDialog';
 import { getWebhookUrl } from '@/services/webhookService';
 import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';

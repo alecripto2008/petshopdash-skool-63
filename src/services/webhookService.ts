@@ -4,11 +4,8 @@ import { WebhookConfig, WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 
 // URLs padrão para fallback caso não estejam no banco
 const DEFAULT_WEBHOOKS = {
-  [WEBHOOK_IDENTIFIERS.SEND_MESSAGE]: 'https://webhook.n8nlabz.com.br/webhook/send-message',
   [WEBHOOK_IDENTIFIERS.PAUSE_BOT]: 'https://webhook.n8nlabz.com.br/webhook/pause-bot',
   [WEBHOOK_IDENTIFIERS.UPLOAD_RAG]: 'https://webhook.n8nlabz.com.br/webhook/upload-rag',
-  [WEBHOOK_IDENTIFIERS.CREATE_EVOLUTION_INSTANCE]: 'https://webhook.n8nlabz.com.br/webhook/create-evolution-instance',
-  [WEBHOOK_IDENTIFIERS.UPDATE_QR_CODE]: 'https://webhook.n8nlabz.com.br/webhook/update-qr-code',
   [WEBHOOK_IDENTIFIERS.CONFIRM_EVOLUTION_STATUS]: 'https://webhook.n8nlabz.com.br/webhook/confirma',
   [WEBHOOK_IDENTIFIERS.UPDATE_EVOLUTION_QR]: 'https://webhook.n8nlabz.com.br/webhook/atualizar-qr-code'
 };
