@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +10,7 @@ import { EmptyWebhooksState } from './EmptyWebhooksState';
 import { Button } from '@/components/ui/button';
 import { WebhookCard } from './WebhookCard';
 import { WebhooksHeader } from './WebhooksHeader';
+import { AlertCircle } from 'lucide-react';
 
 const getWebhookDescription = (identifier: string): string => {
   const descriptions: Record<string, string> = {
@@ -69,6 +71,7 @@ const ConfigContent = () => {
           word => word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' ');
         
+        // Updated default URL pattern without 'create-evolution-instance'
         const defaultUrl = `https://webhook.n8nlabz.com.br/webhook/${identifier.toLowerCase().replace(/_/g, '-')}`;
         
         return {
@@ -113,17 +116,18 @@ const ConfigContent = () => {
   if (configs.length === 0) {
     return (
       <div className="space-y-4">
-        <div className="text-center">
+        <div className="text-center p-8 bg-amber-50/50 dark:bg-amber-900/20 rounded-lg border-2 border-dashed border-amber-200 dark:border-amber-800">
+          <AlertCircle className="h-12 w-12 text-amber-500 dark:text-amber-400 mx-auto mb-4" />
           <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
             Nenhum Webhook Configurado
           </h3>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Parece que não há webhooks configurados no momento.
+            Parece que não há webhooks configurados no momento. Clique no botão abaixo para restaurar as configurações padrão.
           </p>
           <Button 
             variant="default" 
             onClick={createDefaultWebhooks}
-            className="mx-auto"
+            className="mx-auto bg-amber-500 hover:bg-amber-600 text-white"
           >
             Restaurar Webhooks Padrão
           </Button>
