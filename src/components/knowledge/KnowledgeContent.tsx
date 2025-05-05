@@ -4,10 +4,12 @@ import SearchBar from '@/components/knowledge/SearchBar';
 import DocumentGrid from '@/components/knowledge/DocumentGrid';
 import AddDocumentDialog from '@/components/knowledge/AddDocumentDialog';
 import { useDocuments } from '@/hooks/useDocuments';
+import { useToast } from '@/hooks/use-toast';
 
 const KnowledgeContent = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDocumentOpen, setIsAddDocumentOpen] = useState(false);
+  const { toast } = useToast();
   
   const { 
     documents, 
@@ -20,7 +22,20 @@ const KnowledgeContent = () => {
   } = useDocuments();
 
   const handleAddDocument = async (file: File, category: string) => {
-    await uploadFileToWebhook(file, category);
+    try {
+      await uploadFileToWebhook(file, category);
+      toast({
+        title: "Documento adicionado",
+        description: "O documento foi adicionado com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao adicionar documento",
+        description: "Não foi possível adicionar o documento.",
+        variant: "destructive",
+      });
+      console.error('Error uploading document:', error);
+    }
   };
 
   return (
