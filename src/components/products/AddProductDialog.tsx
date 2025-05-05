@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -9,14 +9,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Package } from 'lucide-react';
+import { Package, Loader2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 
 const formSchema = z.object({
-  name: z.string().min(1, 'Nome é obrigatório'),
+  content: z.string().min(1, 'Conteúdo é obrigatório'),
   category: z.string().min(1, 'Categoria é obrigatória'),
-  price: z.string().min(1, 'Preço é obrigatório'),
-  description: z.string().optional(),
 });
 
 interface AddProductDialogProps {
@@ -27,41 +25,53 @@ interface AddProductDialogProps {
 
 const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogProps) => {
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
+      content: '',
       category: '',
-      price: '',
-      description: '',
     },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const { error } = await supabase.from('products').insert({
-      name: values.name,
-      category: values.category,
-      price: parseFloat(values.price),
-      description: values.description,
-      status: 'active',
-    });
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase.from('products').insert({
+        content: values.content,
+        category: values.category,
+        metadata: { 
+          addedAt: new Date().toISOString(),
+        },
+      });
 
-    if (error) {
+      if (error) {
+        toast({
+          title: 'Erro ao adicionar produto',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      toast({
+        title: 'Produto adicionado com sucesso',
+        description: 'O produto foi cadastrado no sistema.',
+      });
+
+      form.reset();
+      onSuccess();
+    } catch (error) {
+      console.error('Error adding product:', error);
       toast({
         title: 'Erro ao adicionar produto',
-        description: error.message,
+        description: 'Ocorreu um erro ao tentar adicionar o produto.',
         variant: 'destructive',
       });
-      return;
+    } finally {
+      setIsSubmitting(false);
     }
-
-    toast({
-      title: 'Produto adicionado com sucesso',
-      description: 'O produto foi cadastrado no sistema.',
-    });
-
-    form.reset();
-    onSuccess();
   };
 
   return (
@@ -88,12 +98,12 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="name"
+                name="content"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome</FormLabel>
+                    <FormLabel>Conteúdo</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Nome do produto" />
+                      <Textarea {...field} placeholder="Descrição do produto" />
                     </FormControl>
                   </FormItem>
                 )}
@@ -112,42 +122,24 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
                 )}
               />
               
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Preço</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="number" step="0.01" placeholder="0.00" />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descrição</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} placeholder="Descrição do produto" />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
               <div className="flex justify-end gap-2 pt-2">
                 <Button 
                   variant="outline" 
                   onClick={() => onOpenChange(false)}
                   type="button"
+                  disabled={isSubmitting}
                 >
                   Cancelar
                 </Button>
-                <Button type="submit">
-                  Adicionar Produto
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    "Adicionar Produto"
+                  )}
                 </Button>
               </div>
             </form>

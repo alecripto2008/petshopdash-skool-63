@@ -9,6 +9,17 @@ import { useToast } from '@/components/ui/use-toast';
 import { Input } from '@/components/ui/input';
 import AddProductDialog from './AddProductDialog';
 
+// Define the Product type to match the actual database schema
+interface Product {
+  id: number;
+  category: string;
+  content: string | null;
+  created_at: string | null;
+  embedding: string | null;
+  metadata: any | null;
+  updated_at: string | null;
+}
+
 const ProductsContent = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,10 +46,12 @@ const ProductsContent = () => {
     },
   });
 
-  const filteredProducts = products?.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = products?.filter(product => {
+    // Updated to check the content or category fields instead of name
+    const contentMatch = product.content?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+    const categoryMatch = product.category?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+    return contentMatch || categoryMatch;
+  });
 
   const handleAddProduct = async () => {
     await refetch();
@@ -86,24 +99,22 @@ const ProductsContent = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nome</TableHead>
+            <TableHead>Conteúdo</TableHead>
             <TableHead>Categoria</TableHead>
-            <TableHead>Preço</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead>Data de Criação</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filteredProducts?.map((product) => (
             <TableRow key={product.id}>
-              <TableCell>{product.name}</TableCell>
-              <TableCell>{product.category}</TableCell>
+              <TableCell>{product.content || 'Sem conteúdo'}</TableCell>
+              <TableCell>{product.category || 'Sem categoria'}</TableCell>
               <TableCell>
-                {product.price?.toLocaleString('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-                })}
+                {product.created_at 
+                  ? new Date(product.created_at).toLocaleDateString('pt-BR')
+                  : 'Data não disponível'
+                }
               </TableCell>
-              <TableCell>{product.status}</TableCell>
             </TableRow>
           ))}
         </TableBody>
