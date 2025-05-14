@@ -98,8 +98,9 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
       }
       const fileUrl = publicUrlData.publicUrl;
 
+      // Alterado de 'title' para 'titulo'
       const { error: insertError } = await supabase.from('products').insert({
-        title: values.category,
+        titulo: values.category, // Usando 'category' do formulário como 'titulo'
         file_url: fileUrl,
       });
 

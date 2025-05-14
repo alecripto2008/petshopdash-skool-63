@@ -2,21 +2,17 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, RefreshCw, Download } from 'lucide-react'; // Adicionado Download
+import { Plus, Search, RefreshCw, Download } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
 import { Input } from '@/components/ui/input';
 import AddProductDialog from './AddProductDialog';
 
-// Define a interface Product para corresponder à nova estrutura de dados
 interface Product {
   id: number;
-  title: string; // Anteriormente 'category', agora é o título principal
-  file_url: string; // URL do arquivo do produto
+  titulo: string; // Alterado de title para titulo
+  file_url: string;
   created_at: string | null;
-  // Campos como 'content', 'embedding', 'metadata', 'updated_at' podem ou não existir
-  // dependendo da sua tabela 'products' real. Ajuste conforme necessário.
-  // Para este exemplo, focaremos em title, file_url e created_at.
 }
 
 const ProductsContent = () => {
@@ -27,10 +23,9 @@ const ProductsContent = () => {
   const { data: products, isLoading, refetch, isRefetching } = useQuery<Product[], Error>({
     queryKey: ['products'],
     queryFn: async () => {
-      // Ajustar o select para buscar os campos corretos: id, title, file_url, created_at
       const { data, error } = await supabase
         .from('products')
-        .select('id, title, file_url, created_at') // Selecionar os campos relevantes
+        .select('id, titulo, file_url, created_at') // Alterado de title para titulo
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -39,21 +34,19 @@ const ProductsContent = () => {
           description: error.message,
           variant: 'destructive',
         });
-        throw error; // Lançar o erro para o React Query tratar
+        throw error;
       }
       return data || [];
     },
   });
 
   const filteredProducts = products?.filter(product => {
-    // Atualizar a lógica de filtro para usar 'title'
-    const titleMatch = product.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+    const titleMatch = product.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) || false; // Alterado de title para titulo
     return titleMatch;
   });
 
   const handleAddProductSuccess = async () => {
-    await refetch(); // Rebusca os produtos para atualizar a lista
-    // O AddProductDialog já fecha a si mesmo e mostra o toast de sucesso
+    await refetch();
   };
 
   if (isLoading) {
@@ -106,7 +99,7 @@ const ProductsContent = () => {
           {filteredProducts && filteredProducts.length > 0 ? (
             filteredProducts.map((product) => (
               <TableRow key={product.id}>
-                <TableCell>{product.title || 'Sem título'}</TableCell>
+                <TableCell>{product.titulo || 'Sem título'}</TableCell> {/* Alterado de title para titulo */}
                 <TableCell>
                   {product.file_url ? (
                     <a 
@@ -143,7 +136,7 @@ const ProductsContent = () => {
       <AddProductDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-        onSuccess={handleAddProductSuccess} // Passando a função de callback correta
+        onSuccess={handleAddProductSuccess}
       />
     </div>
   );
