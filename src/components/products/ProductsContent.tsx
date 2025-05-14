@@ -1,23 +1,22 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, RefreshCw } from 'lucide-react';
+import { Plus, Search, RefreshCw, Download } from 'lucide-react'; // Adicionado Download
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
 import { Input } from '@/components/ui/input';
 import AddProductDialog from './AddProductDialog';
 
-// Define the Product type to match the actual database schema
+// Define a interface Product para corresponder à nova estrutura de dados
 interface Product {
   id: number;
-  category: string;
-  content: string | null;
+  title: string; // Anteriormente 'category', agora é o título principal
+  file_url: string; // URL do arquivo do produto
   created_at: string | null;
-  embedding: string | null;
-  metadata: any | null;
-  updated_at: string | null;
+  // Campos como 'content', 'embedding', 'metadata', 'updated_at' podem ou não existir
+  // dependendo da sua tabela 'products' real. Ajuste conforme necessário.
+  // Para este exemplo, focaremos em title, file_url e created_at.
 }
 
 const ProductsContent = () => {
@@ -25,12 +24,13 @@ const ProductsContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
-  const { data: products, isLoading, refetch, isRefetching } = useQuery({
+  const { data: products, isLoading, refetch, isRefetching } = useQuery<Product[], Error>({
     queryKey: ['products'],
     queryFn: async () => {
+      // Ajustar o select para buscar os campos corretos: id, title, file_url, created_at
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select('id, title, file_url, created_at') // Selecionar os campos relevantes
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -39,23 +39,21 @@ const ProductsContent = () => {
           description: error.message,
           variant: 'destructive',
         });
-        return [];
+        throw error; // Lançar o erro para o React Query tratar
       }
-
       return data || [];
     },
   });
 
   const filteredProducts = products?.filter(product => {
-    // Updated to check the content or category fields instead of name
-    const contentMatch = product.content?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
-    const categoryMatch = product.category?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
-    return contentMatch || categoryMatch;
+    // Atualizar a lógica de filtro para usar 'title'
+    const titleMatch = product.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+    return titleMatch;
   });
 
-  const handleAddProduct = async () => {
-    await refetch();
-    setIsAddDialogOpen(false);
+  const handleAddProductSuccess = async () => {
+    await refetch(); // Rebusca os produtos para atualizar a lista
+    // O AddProductDialog já fecha a si mesmo e mostra o toast de sucesso
   };
 
   if (isLoading) {
@@ -74,7 +72,7 @@ const ProductsContent = () => {
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500 dark:text-gray-400" />
             <Input 
-              placeholder="Pesquisar produtos..." 
+              placeholder="Pesquisar por título..." 
               className="pl-10 w-full sm:w-64"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -99,34 +97,57 @@ const ProductsContent = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Conteúdo</TableHead>
-            <TableHead>Categoria</TableHead>
+            <TableHead>Título (Categoria)</TableHead>
+            <TableHead>Arquivo</TableHead>
             <TableHead>Data de Criação</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredProducts?.map((product) => (
-            <TableRow key={product.id}>
-              <TableCell>{product.content || 'Sem conteúdo'}</TableCell>
-              <TableCell>{product.category || 'Sem categoria'}</TableCell>
-              <TableCell>
-                {product.created_at 
-                  ? new Date(product.created_at).toLocaleDateString('pt-BR')
-                  : 'Data não disponível'
-                }
+          {filteredProducts && filteredProducts.length > 0 ? (
+            filteredProducts.map((product) => (
+              <TableRow key={product.id}>
+                <TableCell>{product.title || 'Sem título'}</TableCell>
+                <TableCell>
+                  {product.file_url ? (
+                    <a 
+                      href={product.file_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline flex items-center"
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Baixar/Ver Arquivo
+                    </a>
+                  ) : (
+                    'Nenhum arquivo'
+                  )}
+                </TableCell>
+                <TableCell>
+                  {product.created_at 
+                    ? new Date(product.created_at).toLocaleDateString('pt-BR')
+                    : 'Data não disponível'
+                  }
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={3} className="text-center">
+                Nenhum produto encontrado.
               </TableCell>
             </TableRow>
-          ))}
+          )}
         </TableBody>
       </Table>
 
       <AddProductDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-        onSuccess={handleAddProduct}
+        onSuccess={handleAddProductSuccess} // Passando a função de callback correta
       />
     </div>
   );
 };
 
 export default ProductsContent;
+
