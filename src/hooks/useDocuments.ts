@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -53,9 +54,14 @@ export const useDocuments = () => {
         const documentName = doc.titulo || `Documento ${doc.id}`;
         
         // Parse metadata if it's a string
-        const parsedMetadata = typeof doc.metadata === 'string' 
-          ? JSON.parse(doc.metadata) 
-          : doc.metadata;
+        let parsedMetadata = null;
+        try {
+          parsedMetadata = typeof doc.metadata === 'string' 
+            ? JSON.parse(doc.metadata) 
+            : doc.metadata;
+        } catch (e) {
+          parsedMetadata = null;
+        }
         
         // Create Document object with available fields and safe access
         return {
@@ -64,8 +70,8 @@ export const useDocuments = () => {
           type: parsedMetadata && typeof parsedMetadata === 'object' ? getMetadataValue(parsedMetadata, 'type', 'unknown') : 'unknown',
           size: parsedMetadata && typeof parsedMetadata === 'object' ? getMetadataValue(parsedMetadata, 'size', 'Unknown') : 'Unknown',
           category: parsedMetadata && typeof parsedMetadata === 'object' ? getMetadataValue(parsedMetadata, 'category', 'Sem categoria') : 'Sem categoria',
-          // Use current date as fallback if created_at doesn't exist
-          uploadedAt: new Date().toISOString().split('T')[0],
+          // Use current date as fallback since there's no created_at field
+          uploadedAt: new Date().toLocaleDateString('pt-BR'),
           titulo: doc.titulo,
           metadata: parsedMetadata,
         };
@@ -212,7 +218,7 @@ export const useDocuments = () => {
           type: file.type,
           size: `${(file.size / 1024).toFixed(0)} KB`,
           category: category,
-          uploadedAt: new Date().toISOString().split('T')[0],
+          uploadedAt: new Date().toLocaleDateString('pt-BR'),
           titulo: file.name,
           metadata: metadata
         };
