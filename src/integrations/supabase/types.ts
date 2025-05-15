@@ -86,6 +86,7 @@ export type Database = {
       }
       dados_cliente: {
         Row: {
+          address: string | null
           asaas_customer_id: string | null
           cpf_cnpj: string | null
           created_at: string | null
@@ -100,6 +101,7 @@ export type Database = {
           telefone: string | null
         }
         Insert: {
+          address?: string | null
           asaas_customer_id?: string | null
           cpf_cnpj?: string | null
           created_at?: string | null
@@ -114,6 +116,7 @@ export type Database = {
           telefone?: string | null
         }
         Update: {
+          address?: string | null
           asaas_customer_id?: string | null
           cpf_cnpj?: string | null
           created_at?: string | null
@@ -209,30 +212,30 @@ export type Database = {
       }
       products: {
         Row: {
-          category: string | null
           content: string | null
           created_at: string | null
           embedding: string | null
           id: number
           metadata: Json | null
+          titulo: string | null
           updated_at: string | null
         }
         Insert: {
-          category?: string | null
           content?: string | null
           created_at?: string | null
           embedding?: string | null
           id?: number
           metadata?: Json | null
+          titulo?: string | null
           updated_at?: string | null
         }
         Update: {
-          category?: string | null
           content?: string | null
           created_at?: string | null
           embedding?: string | null
           id?: number
           metadata?: Json | null
+          titulo?: string | null
           updated_at?: string | null
         }
         Relationships: []

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,10 +34,9 @@ export const useDocuments = () => {
   const fetchDocuments = async () => {
     try {
       setIsLoading(true);
-      // Only select titulo column
       const { data, error } = await supabase
         .from('documents')
-        .select('titulo');
+        .select('*');
 
       if (error) {
         console.error('Error fetching documents:', error);
@@ -53,15 +53,16 @@ export const useDocuments = () => {
         // Use titulo from the database if available, otherwise generate a name
         const documentName = doc.titulo || `Documento ${index + 1}`;
         
-        // Create dummy data for other required fields since we don't have metadata
+        // Create Document object with available fields
         return {
-          id: index + 1, // Generate dummy id
+          id: doc.id,
           name: documentName,
-          type: 'unknown',
-          size: 'Unknown',
-          category: 'Sem categoria',
-          uploadedAt: new Date().toISOString().split('T')[0],
+          type: doc.metadata?.type || 'unknown',
+          size: doc.metadata?.size || 'Unknown',
+          category: doc.metadata?.category || 'Sem categoria',
+          uploadedAt: doc.created_at ? new Date(doc.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
           titulo: doc.titulo,
+          metadata: doc.metadata,
         };
       });
 
@@ -105,17 +106,23 @@ export const useDocuments = () => {
     });
   };
 
-  // Delete document function - simplified implementation
+  // Delete document function
   const handleDeleteDocument = async (id: number, title: string) => {
     try {
-      console.log(`Document deletion for ${title} (ID: ${id}) is not available`);
+      const { error } = await supabase
+        .from('documents')
+        .delete()
+        .eq('id', id);
+        
+      if (error) {
+        throw error;
+      }
       
-      // Just update the UI for now
       setDocuments(documents.filter(doc => doc.id !== id));
       
       toast({
         title: "Documento excluído",
-        description: "O documento foi removido com sucesso da interface!",
+        description: "O documento foi removido com sucesso!",
         variant: "default",
       });
     } catch (err) {
@@ -128,17 +135,23 @@ export const useDocuments = () => {
     }
   };
 
-  // Clear all documents - simplified implementation
+  // Clear all documents
   const clearAllDocuments = async () => {
     try {
-      console.log('Clear all documents functionality is not implemented');
+      const { error } = await supabase
+        .from('documents')
+        .delete()
+        .neq('id', 0); // Delete all documents
+        
+      if (error) {
+        throw error;
+      }
       
-      // Just clear the UI for now
       setDocuments([]);
       
       toast({
         title: "Base de conhecimento limpa",
-        description: "Todos os documentos foram removidos da interface!",
+        description: "Todos os documentos foram removidos!",
         variant: "default",
       });
     } catch (err) {
@@ -151,16 +164,58 @@ export const useDocuments = () => {
     }
   };
 
-  // Upload file to webhook
+  // Upload file to Supabase
   const uploadFileToWebhook = async (file: File, category: string) => {
     try {
-      toast({
-        title: "Funcionalidade desativada",
-        description: "O upload de documentos foi temporariamente desativado.",
-        variant: "destructive",
-      });
+      // Create a simplified file reader to extract text content
+      const fileContent = await readFileAsText(file);
       
-      return false;
+      // Prepare metadata
+      const metadata = {
+        category: category,
+        fileName: file.name,
+        fileType: file.type,
+        size: `${(file.size / 1024).toFixed(0)} KB`,
+        uploadDate: new Date().toISOString()
+      };
+      
+      // Insert document into Supabase
+      const { data, error } = await supabase
+        .from('documents')
+        .insert({
+          titulo: file.name,
+          content: fileContent?.substring(0, 10000) || 'No content extracted', // Limit content length
+          metadata: metadata
+        })
+        .select();
+        
+      if (error) {
+        console.error('Error saving document:', error);
+        toast({
+          title: "Erro ao salvar documento",
+          description: "Não foi possível salvar o documento no banco de dados.",
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      // Update the documents list with the new document
+      if (data && data.length > 0) {
+        const newDoc: Document = {
+          id: data[0].id,
+          name: file.name,
+          type: file.type,
+          size: `${(file.size / 1024).toFixed(0)} KB`,
+          category: category,
+          uploadedAt: new Date().toISOString().split('T')[0],
+          titulo: file.name,
+          metadata: metadata
+        };
+        
+        setDocuments(prev => [newDoc, ...prev]);
+      }
+      
+      return true;
     } catch (error) {
       console.error('Erro ao enviar o arquivo:', error);
       
@@ -172,6 +227,23 @@ export const useDocuments = () => {
       
       return false;
     }
+  };
+  
+  // Helper function to read file content
+  const readFileAsText = async (file: File): Promise<string | null> => {
+    return new Promise((resolve, reject) => {
+      if (file.type.includes('text') || file.type.includes('pdf') || 
+          file.type.includes('document') || file.name.endsWith('.txt') || 
+          file.name.endsWith('.md')) {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(null);
+        reader.readAsText(file);
+      } else {
+        // For non-text files, just return the filename
+        resolve(`File: ${file.name}`);
+      }
+    });
   };
 
   // Load documents on hook initialization

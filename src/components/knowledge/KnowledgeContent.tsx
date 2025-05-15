@@ -23,11 +23,13 @@ const KnowledgeContent = () => {
 
   const handleAddDocument = async (file: File, category: string) => {
     try {
-      await uploadFileToWebhook(file, category);
-      toast({
-        title: "Documento adicionado",
-        description: "O documento foi adicionado com sucesso.",
-      });
+      const success = await uploadFileToWebhook(file, category);
+      if (success) {
+        toast({
+          title: "Documento adicionado",
+          description: "O documento foi adicionado com sucesso.",
+        });
+      }
     } catch (error) {
       toast({
         title: "Erro ao adicionar documento",
