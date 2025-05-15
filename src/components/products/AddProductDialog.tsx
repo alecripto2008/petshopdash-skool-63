@@ -1,18 +1,18 @@
-import React, { useState, useRef } from 'react'; // Adicionado useRef
+import React, { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'; // Adicionado FormMessage
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { FileUp, Upload, Loader2, FileText } from 'lucide-react'; // Removido Package, já que não é mais usado
+import { FileUp, Upload, Loader2, FileText } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { v4 as uuidv4 } from 'uuid'; // Importar uuid
+import { v4 as uuidv4 } from 'uuid';
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB - Exemplo de tamanho máximo
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_FILE_TYPES = [
   'application/pdf',
   'application/msword',
@@ -45,7 +45,7 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
   const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null); // Ref para o input de arquivo
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -67,7 +67,7 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!selectedFile) { // selectedFile é atualizado pelo handleFileChange
+    if (!selectedFile) {
       toast({
         title: 'Nenhum arquivo selecionado',
         description: 'Por favor, selecione um arquivo para fazer upload.',
@@ -77,10 +77,13 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
     }
 
     setIsUploading(true);
+    let uploadedFilePath: string | null = null; // Para rastrear o arquivo no storage
     try {
       const fileName = `${uuidv4()}-${selectedFile.name}`;
       const filePath = `product-files/${fileName}`;
+      uploadedFilePath = filePath; // Salva o path para possível remoção em caso de erro
 
+      // 1. Upload do selectedFile para o Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('product-files') 
         .upload(filePath, selectedFile);
@@ -89,35 +92,30 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
         throw uploadError;
       }
 
-      const { data: publicUrlData } = supabase.storage
-        .from('product-files')
-        .getPublicUrl(filePath);
-
-      if (!publicUrlData || !publicUrlData.publicUrl) {
-        throw new Error('Não foi possível obter a URL pública do arquivo.');
-      }
-      const fileUrl = publicUrlData.publicUrl;
-
-      // Alterado de 'title' para 'titulo'
+      // 2. Salvar na tabela 'products' do Supabase: APENAS o titulo (category)
+      // A URL do arquivo NÃO será salva na tabela 'products'
       const { error: insertError } = await supabase.from('products').insert({
         titulo: values.category, // Usando 'category' do formulário como 'titulo'
-        file_url: fileUrl,
+        // file_url: fileUrl, // REMOVIDO - Não salvar a URL do arquivo na tabela
       });
 
       if (insertError) {
-        await supabase.storage.from('product-files').remove([filePath]);
+        // Se a inserção no DB falhou, remover o arquivo do storage que foi enviado
+        if (uploadedFilePath) {
+            await supabase.storage.from('product-files').remove([uploadedFilePath]);
+        }
         throw insertError;
       }
 
       toast({
         title: 'Produto adicionado com sucesso!',
-        description: `O produto "${values.category}" foi cadastrado e o arquivo enviado.`,
+        description: `O produto "${values.category}" foi cadastrado e o arquivo enviado para o armazenamento.`,
       });
 
       form.reset();
       setSelectedFile(null);
       if (fileInputRef.current) {
-        fileInputRef.current.value = ''; // Limpa o input de arquivo nativo
+        fileInputRef.current.value = '';
       }
       onSuccess();
       onOpenChange(false);
@@ -129,6 +127,11 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
         description: error.message || 'Ocorreu um erro inesperado.',
         variant: 'destructive',
       });
+      // Se houve um erro após o upload bem-sucedido mas antes da inserção no DB (ou durante a inserção),
+      // e o arquivo foi enviado, tentar removê-lo do storage
+      if (uploadError && uploadedFilePath && !insertError) { // Correção: uploadError não é o ideal aqui, mas se upload falhou, não há o que remover
+        // A lógica de remoção já está no bloco de insertError
+      }
     } finally {
       setIsUploading(false);
     }
@@ -158,7 +161,7 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
             <FormField
               control={form.control}
               name="file"
-              render={({ field }) => ( // field não é usado diretamente para o input, mas para o form state
+              render={({ field }) => (
                 <FormItem>
                   <FormLabel>Arquivo do Produto</FormLabel>
                   <FormControl>
@@ -168,7 +171,7 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
                         id="product-file-upload-revised"
                         ref={fileInputRef}
                         className="hidden"
-                        onChange={handleFileChange} // Usar o handler customizado
+                        onChange={handleFileChange}
                         accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
                       />
                       <label
@@ -229,7 +232,7 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
               </Button>
               <Button 
                 type="submit"
-                disabled={!form.formState.isValid || isUploading} // Desabilitar se o form não for válido ou estiver enviando
+                disabled={!form.formState.isValid || isUploading}
               >
                 {isUploading ? (
                   <>
@@ -239,7 +242,7 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
                 ) : (
                   <>
                     <Upload className="h-4 w-4 mr-2" />
-                    Fazer Upload {/* Texto do botão corrigido */}
+                    Fazer Upload
                   </>
                 )}
               </Button>

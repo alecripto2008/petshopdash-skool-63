@@ -2,16 +2,16 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, RefreshCw, Download } from 'lucide-react';
+import { Plus, Search, RefreshCw } from 'lucide-react'; // Removido Download, pois não será mais usado
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
 import { Input } from '@/components/ui/input';
 import AddProductDialog from './AddProductDialog';
 
+// Define a interface Product para corresponder à nova estrutura de dados (sem file_url)
 interface Product {
   id: number;
-  titulo: string; // Alterado de title para titulo
-  file_url: string;
+  titulo: string;
   created_at: string | null;
 }
 
@@ -23,9 +23,10 @@ const ProductsContent = () => {
   const { data: products, isLoading, refetch, isRefetching } = useQuery<Product[], Error>({
     queryKey: ['products'],
     queryFn: async () => {
+      // Ajustar o select para buscar apenas id, titulo, created_at
       const { data, error } = await supabase
         .from('products')
-        .select('id, titulo, file_url, created_at') // Alterado de title para titulo
+        .select('id, titulo, created_at') // REMOVIDO file_url da consulta
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -41,7 +42,7 @@ const ProductsContent = () => {
   });
 
   const filteredProducts = products?.filter(product => {
-    const titleMatch = product.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) || false; // Alterado de title para titulo
+    const titleMatch = product.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
     return titleMatch;
   });
 
@@ -91,7 +92,7 @@ const ProductsContent = () => {
         <TableHeader>
           <TableRow>
             <TableHead>Título (Categoria)</TableHead>
-            <TableHead>Arquivo</TableHead>
+            {/* <TableHead>Arquivo</TableHead> REMOVIDA COLUNA ARQUIVO */}
             <TableHead>Data de Criação</TableHead>
           </TableRow>
         </TableHeader>
@@ -99,7 +100,8 @@ const ProductsContent = () => {
           {filteredProducts && filteredProducts.length > 0 ? (
             filteredProducts.map((product) => (
               <TableRow key={product.id}>
-                <TableCell>{product.titulo || 'Sem título'}</TableCell> {/* Alterado de title para titulo */}
+                <TableCell>{product.titulo || 'Sem título'}</TableCell>
+                {/* REMOVIDA CÉLULA DE ARQUIVO 
                 <TableCell>
                   {product.file_url ? (
                     <a 
@@ -114,7 +116,8 @@ const ProductsContent = () => {
                   ) : (
                     'Nenhum arquivo'
                   )}
-                </TableCell>
+                </TableCell> 
+                */}
                 <TableCell>
                   {product.created_at 
                     ? new Date(product.created_at).toLocaleDateString('pt-BR')
@@ -125,7 +128,8 @@ const ProductsContent = () => {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={3} className="text-center">
+              {/* Ajustado colSpan para 2, já que uma coluna foi removida */}
+              <TableCell colSpan={2} className="text-center">
                 Nenhum produto encontrado.
               </TableCell>
             </TableRow>
