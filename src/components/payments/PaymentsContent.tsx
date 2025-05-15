@@ -9,7 +9,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { formatCurrency, groupPaymentsByMonth } from '@/lib/utils';
+import { formatCurrency, groupPaymentsByMonth, type Payment, type GroupedPayments } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,10 +41,10 @@ const PaymentsContent = () => {
           description: error.message,
           variant: 'destructive',
         });
-        return [];
+        return [] as Payment[];
       }
 
-      return data || [];
+      return data as Payment[] || [];
     },
   });
 
@@ -54,9 +54,9 @@ const PaymentsContent = () => {
     payment.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const groupedPayments = groupPaymentsByMonth(filteredPayments || []);
+  const groupedPayments: GroupedPayments[] = groupPaymentsByMonth(filteredPayments || []);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setNewPayment(prev => ({
       ...prev,
@@ -120,7 +120,7 @@ const PaymentsContent = () => {
     refetch();
   };
 
-  const toggleMonthExpansion = (monthName) => {
+  const toggleMonthExpansion = (monthName: string) => {
     if (expandedMonth === monthName) {
       setExpandedMonth(null);
     } else {
@@ -128,7 +128,7 @@ const PaymentsContent = () => {
     }
   };
 
-  const renderPaymentTable = (payments, monthName, total) => {
+  const renderPaymentTable = (payments: Payment[], monthName: string, total: number) => {
     const isExpanded = expandedMonth === monthName;
     
     if (isMobile) {
