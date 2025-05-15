@@ -1,13 +1,18 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Search, RefreshCw, CreditCard, Plus } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Search, RefreshCw, CreditCard, Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { formatCurrency, groupPaymentsByMonth } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 const PaymentsContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,7 +23,9 @@ const PaymentsContent = () => {
     description: '',
     value: '',
   });
+  const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const { data: payments, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['payments'],
@@ -46,6 +53,8 @@ const PaymentsContent = () => {
     payment.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     payment.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const groupedPayments = groupPaymentsByMonth(filteredPayments || []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -111,6 +120,137 @@ const PaymentsContent = () => {
     refetch();
   };
 
+  const toggleMonthExpansion = (monthName) => {
+    if (expandedMonth === monthName) {
+      setExpandedMonth(null);
+    } else {
+      setExpandedMonth(monthName);
+    }
+  };
+
+  const renderPaymentTable = (payments, monthName, total) => {
+    const isExpanded = expandedMonth === monthName;
+    
+    if (isMobile) {
+      return (
+        <Card key={monthName} className="mb-6">
+          <CardHeader className="cursor-pointer" onClick={() => toggleMonthExpansion(monthName)}>
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-lg font-medium capitalize">
+                {monthName}
+              </CardTitle>
+              <div className="flex items-center">
+                {isExpanded ? (
+                  <ChevronUp className="h-5 w-5 text-gray-500" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-gray-500" />
+                )}
+              </div>
+            </div>
+          </CardHeader>
+          {isExpanded && (
+            <>
+              <CardContent className="px-0 pt-0">
+                {payments.map((payment) => (
+                  <div key={payment.id} className="border-t p-4">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="text-sm font-medium">Cliente</div>
+                      <div className="text-sm">{payment.client}</div>
+                      <div className="text-sm font-medium">Tipo</div>
+                      <div className="text-sm">{payment.type}</div>
+                      <div className="text-sm font-medium">Descrição</div>
+                      <div className="text-sm">{payment.description}</div>
+                      <div className="text-sm font-medium">Valor</div>
+                      <div className="text-sm font-bold text-right">
+                        {formatCurrency(Number(payment.value))}
+                      </div>
+                      <div className="text-sm font-medium">Data</div>
+                      <div className="text-sm">
+                        {new Date(payment.created_at).toLocaleDateString('pt-BR')}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+              <CardFooter className="bg-slate-50 dark:bg-slate-900 border-t flex justify-between p-4">
+                <span className="font-medium">Total do mês</span>
+                <span className="font-bold text-green-700 dark:text-green-500">
+                  {formatCurrency(total)}
+                </span>
+              </CardFooter>
+            </>
+          )}
+          {!isExpanded && (
+            <CardFooter className="bg-slate-50 dark:bg-slate-900 border-t flex justify-between p-4">
+              <span className="text-sm text-muted-foreground">
+                {payments.length} {payments.length === 1 ? 'pagamento' : 'pagamentos'}
+              </span>
+              <Badge variant="outline" className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                {formatCurrency(total)}
+              </Badge>
+            </CardFooter>
+          )}
+        </Card>
+      );
+    }
+    
+    return (
+      <div className="mb-8" key={monthName}>
+        <div 
+          className="flex justify-between items-center mb-2 cursor-pointer"
+          onClick={() => toggleMonthExpansion(monthName)}
+        >
+          <h3 className="text-lg font-medium capitalize flex items-center">
+            {monthName}
+            {isExpanded ? (
+              <ChevronUp className="ml-2 h-5 w-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="ml-2 h-5 w-5 text-gray-500" />
+            )}
+          </h3>
+          <Badge variant="outline" className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+            {payments.length} {payments.length === 1 ? 'pagamento' : 'pagamentos'}
+          </Badge>
+        </div>
+        
+        {isExpanded && (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Descrição</TableHead>
+                <TableHead>Valor</TableHead>
+                <TableHead>Data</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {payments.map((payment) => (
+                <TableRow key={payment.id}>
+                  <TableCell>{payment.client}</TableCell>
+                  <TableCell>{payment.type}</TableCell>
+                  <TableCell>{payment.description}</TableCell>
+                  <TableCell>{formatCurrency(Number(payment.value))}</TableCell>
+                  <TableCell>
+                    {new Date(payment.created_at).toLocaleDateString('pt-BR')}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+            <TableFooter>
+              <TableRow>
+                <TableCell colSpan={3}>Total do mês</TableCell>
+                <TableCell colSpan={2} className="text-right font-bold">
+                  {formatCurrency(total)}
+                </TableCell>
+              </TableRow>
+            </TableFooter>
+          </Table>
+        )}
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -119,22 +259,24 @@ const PaymentsContent = () => {
     );
   }
 
+  const totalGeral = groupedPayments.reduce((acc, group) => acc + group.total, 0);
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
         <h3 className="text-lg font-medium">Pagamentos</h3>
-        <div className="flex gap-3">
+        <div className="flex flex-col md:flex-row gap-3">
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500 dark:text-gray-400" />
             <Input 
               placeholder="Pesquisar pagamentos..." 
-              className="pl-10 w-full sm:w-64"
+              className="pl-10 w-full"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <Button 
-            variant="refresh" 
+            variant="outline" 
             onClick={() => refetch()} 
             disabled={isRefetching}
             className="min-w-[40px]"
@@ -152,35 +294,20 @@ const PaymentsContent = () => {
         </div>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Cliente</TableHead>
-            <TableHead>Tipo</TableHead>
-            <TableHead>Descrição</TableHead>
-            <TableHead>Valor</TableHead>
-            <TableHead>Data</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredPayments?.map((payment) => (
-            <TableRow key={payment.id}>
-              <TableCell>{payment.client}</TableCell>
-              <TableCell>{payment.type}</TableCell>
-              <TableCell>{payment.description}</TableCell>
-              <TableCell>
-                {payment.value?.toLocaleString('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-                })}
-              </TableCell>
-              <TableCell>
-                {new Date(payment.created_at).toLocaleDateString('pt-BR')}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      {groupedPayments.length > 0 ? (
+        <div>
+          {groupedPayments.map(group => renderPaymentTable(group.payments, group.monthName, group.total))}
+          
+          <div className="mt-8 bg-slate-100 dark:bg-slate-800 rounded-lg p-4 flex justify-between items-center">
+            <span className="text-lg font-bold">Total Geral</span>
+            <span className="text-xl font-bold text-green-700 dark:text-green-500">{formatCurrency(totalGeral)}</span>
+          </div>
+        </div>
+      ) : (
+        <div className="text-center py-10">
+          <p className="text-gray-500 dark:text-gray-400">Nenhum pagamento encontrado.</p>
+        </div>
+      )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
