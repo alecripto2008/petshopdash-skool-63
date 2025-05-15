@@ -74,6 +74,56 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
       .replace(/\s+/g, '_'); // Replace spaces with underscores
   };
 
+  // Function to sanitize text content to remove problematic Unicode characters
+  const sanitizeTextContent = (text: string): string => {
+    if (!text) return '';
+    
+    // Remove null bytes, control characters and other problematic Unicode sequences
+    return text
+      .replace(/\0/g, '') // Remove null bytes
+      .replace(/\\u0000/g, '') // Remove escaped null bytes
+      .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
+      .replace(/\\u[0-9a-fA-F]{4}/g, '') // Remove Unicode escape sequences
+      .replace(/[^\x20-\x7E\xA0-\xFF\u0100-\uFFFF]/g, ' '); // Replace other non-standard chars with spaces
+  };
+
+  // Read file content with better error handling
+  const readFileAsText = async (file: File): Promise<string | null> => {
+    return new Promise((resolve, reject) => {
+      try {
+        // Handle different file types
+        if (file.type.includes('text') || file.type.includes('pdf') || 
+            file.type.includes('document') || file.name.endsWith('.txt') || 
+            file.name.endsWith('.md')) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              // Ensure we're returning a string and not binary data
+              const result = typeof reader.result === 'string' ? reader.result : '';
+              resolve(result);
+            } catch (e) {
+              console.error('Error processing file content:', e);
+              resolve(`Nome do arquivo: ${file.name}`); // Fallback to just the filename
+            }
+          };
+          reader.onerror = (e) => {
+            console.error('FileReader error:', e);
+            resolve(`Nome do arquivo: ${file.name}`);
+          };
+          
+          // Use readAsText for text files
+          reader.readAsText(file);
+        } else {
+          // For non-text files, just return the filename
+          resolve(`Nome do arquivo: ${file.name}`);
+        }
+      } catch (e) {
+        console.error('Exception in readFileAsText:', e);
+        resolve(`Nome do arquivo: ${file.name}`);
+      }
+    });
+  };
+
   // Function to handle file upload with proper error handling
   const uploadFile = async (file: File, category: string): Promise<string> => {
     const sanitizedFileName = sanitizeFileName(`${uuidv4()}-${file.name}`);
@@ -105,12 +155,29 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
     let uploadedFilePath: string | null = null;
     
     try {
+      // Extract and sanitize file content as in the knowledge page
+      const fileContent = await readFileAsText(selectedFile);
+      const sanitizedContent = fileContent ? sanitizeTextContent(fileContent) : 'Sem conteúdo extraído';
+      
+      console.log('Conteúdo extraído e sanitizado, tamanho:', sanitizedContent.length);
+      
       // Upload file with sanitized file name
       uploadedFilePath = await uploadFile(selectedFile, values.category);
+      
+      // Prepare metadata - ensure it's a plain object with no special characters
+      const metadata = {
+        category: values.category,
+        fileName: selectedFile.name,
+        type: selectedFile.type,
+        size: `${(selectedFile.size / 1024).toFixed(0)} KB`,
+        uploadDate: new Date().toISOString()
+      };
 
-      // Save product metadata to database
+      // Save product metadata to database with sanitized content
       const { error: insertError } = await supabase.from('products').insert({
-        titulo: values.category, // Usando 'category' do formulário como 'titulo'
+        titulo: values.category,
+        content: sanitizedContent.substring(0, 10000), // Limit content length
+        metadata: metadata
       });
 
       if (insertError) {

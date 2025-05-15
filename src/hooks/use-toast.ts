@@ -14,7 +14,7 @@ type ToasterToast = {
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
-  variant?: "default" | "destructive"  // Correct property name is "variant", not "variants"
+  variant?: "default" | "destructive"  // Using the correct property name "variant"
 }
 
 const actionTypes = {
