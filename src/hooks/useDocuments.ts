@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -62,12 +61,11 @@ export const useDocuments = () => {
         return {
           id: doc.id,
           name: documentName,
-          type: parsedMetadata && typeof parsedMetadata === 'object' ? (parsedMetadata.type || 'unknown') : 'unknown',
-          size: parsedMetadata && typeof parsedMetadata === 'object' ? (parsedMetadata.size || 'Unknown') : 'Unknown',
-          category: parsedMetadata && typeof parsedMetadata === 'object' ? (parsedMetadata.category || 'Sem categoria') : 'Sem categoria',
-          uploadedAt: doc.created_at 
-            ? new Date(doc.created_at).toISOString().split('T')[0] 
-            : new Date().toISOString().split('T')[0],
+          type: parsedMetadata && typeof parsedMetadata === 'object' ? getMetadataValue(parsedMetadata, 'type', 'unknown') : 'unknown',
+          size: parsedMetadata && typeof parsedMetadata === 'object' ? getMetadataValue(parsedMetadata, 'size', 'Unknown') : 'Unknown',
+          category: parsedMetadata && typeof parsedMetadata === 'object' ? getMetadataValue(parsedMetadata, 'category', 'Sem categoria') : 'Sem categoria',
+          // Use current date as fallback if created_at doesn't exist
+          uploadedAt: new Date().toISOString().split('T')[0],
           titulo: doc.titulo,
           metadata: parsedMetadata,
         };
