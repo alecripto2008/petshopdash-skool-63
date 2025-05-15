@@ -176,6 +176,19 @@ export const useDocuments = () => {
     }
   };
 
+  // Sanitize text to remove problematic characters
+  const sanitizeTextContent = (text: string): string => {
+    if (!text) return '';
+    
+    // Remove null bytes, control characters and other problematic Unicode sequences
+    return text
+      .replace(/\0/g, '') // Remove null bytes
+      .replace(/\\u0000/g, '') // Remove escaped null bytes
+      .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
+      .replace(/\\u[0-9a-fA-F]{4}/g, '') // Remove Unicode escape sequences
+      .replace(/[^\x20-\x7E\xA0-\xFF\u0100-\uFFFF]/g, ' '); // Replace other non-standard chars with spaces
+  };
+
   // Upload file to Supabase
   const uploadFileToWebhook = async (file: File, category: string) => {
     try {
@@ -183,9 +196,11 @@ export const useDocuments = () => {
       
       // Create a simplified file reader to extract text content
       const fileContent = await readFileAsText(file);
-      console.log('Conteúdo extraído, tamanho:', fileContent ? fileContent.length : 0);
+      const sanitizedContent = fileContent ? sanitizeTextContent(fileContent) : 'Sem conteúdo extraído';
       
-      // Prepare metadata
+      console.log('Conteúdo extraído e sanitizado, tamanho:', sanitizedContent.length);
+      
+      // Prepare metadata - ensure it's a plain object with no special characters
       const metadata = {
         category: category,
         fileName: file.name,
@@ -199,13 +214,13 @@ export const useDocuments = () => {
       // Insertion payload
       const insertData = {
         titulo: file.name,
-        content: fileContent?.substring(0, 10000) || 'Sem conteúdo extraído', // Limit content length
+        content: sanitizedContent.substring(0, 10000), // Limit content length
         metadata: metadata
       };
       
-      console.log('Enviando para o Supabase:', insertData);
+      console.log('Enviando para o Supabase, tamanho do conteúdo:', insertData.content.length);
       
-      // Insert document into Supabase - CORREÇÃO AQUI
+      // Insert document into Supabase
       const { data, error } = await supabase
         .from('documents')
         .insert(insertData)
@@ -253,19 +268,39 @@ export const useDocuments = () => {
     }
   };
   
-  // Helper function to read file content
+  // Helper function to read file content with better error handling
   const readFileAsText = async (file: File): Promise<string | null> => {
     return new Promise((resolve, reject) => {
-      if (file.type.includes('text') || file.type.includes('pdf') || 
-          file.type.includes('document') || file.name.endsWith('.txt') || 
-          file.name.endsWith('.md')) {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => reject(null);
-        reader.readAsText(file);
-      } else {
-        // For non-text files, just return the filename
-        resolve(`File: ${file.name}`);
+      try {
+        // Handle different file types
+        if (file.type.includes('text') || file.type.includes('pdf') || 
+            file.type.includes('document') || file.name.endsWith('.txt') || 
+            file.name.endsWith('.md')) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              // Ensure we're returning a string and not binary data
+              const result = typeof reader.result === 'string' ? reader.result : '';
+              resolve(result);
+            } catch (e) {
+              console.error('Error processing file content:', e);
+              resolve(`Nome do arquivo: ${file.name}`); // Fallback to just the filename
+            }
+          };
+          reader.onerror = (e) => {
+            console.error('FileReader error:', e);
+            resolve(`Nome do arquivo: ${file.name}`);
+          };
+          
+          // Use readAsText for text files
+          reader.readAsText(file);
+        } else {
+          // For non-text files, just return the filename
+          resolve(`Nome do arquivo: ${file.name}`);
+        }
+      } catch (e) {
+        console.error('Exception in readFileAsText:', e);
+        resolve(`Nome do arquivo: ${file.name}`);
       }
     });
   };
