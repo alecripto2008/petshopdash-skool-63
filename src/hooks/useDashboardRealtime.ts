@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useClientStats } from './useClientStats';
 import { useConversations } from './useConversations';
@@ -7,9 +7,14 @@ import { useConversations } from './useConversations';
 export function useDashboardRealtime() {
   const { fetchConversations } = useConversations();
   const { refetchStats } = useClientStats();
+  const hasSubscribedRef = useRef(false);
 
   useEffect(() => {
+    // Evitar múltiplas subscrições
+    if (hasSubscribedRef.current) return;
+    
     console.log('Setting up dashboard-wide realtime updates');
+    hasSubscribedRef.current = true;
     
     // Subscribe to changes in the clients table
     const clientsSubscription = supabase
@@ -64,7 +69,7 @@ export function useDashboardRealtime() {
       clientsSubscription.unsubscribe();
       scheduleSubscription.unsubscribe();
       servicesSubscription.unsubscribe();
+      hasSubscribedRef.current = false;
     };
   }, [refetchStats, fetchConversations]);
 }
-
