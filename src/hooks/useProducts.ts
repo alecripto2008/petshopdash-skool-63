@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -65,7 +66,7 @@ export const useProducts = () => {
       // Call webhook to delete file from system
       console.log('Enviando solicitação para excluir produto:', title);
       
-      const response = await fetch('https://n8n.tomazbello.com/webhook/excluir-arquivo-rag', {
+      const response = await fetch('https://n8n.tomazbello.com/webhook/excluir-produto-rag', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -102,7 +103,7 @@ export const useProducts = () => {
     try {
       console.log('Enviando solicitação para excluir todos os produtos');
       
-      const response = await fetch('https://n8n.tomazbello.com/webhook/excluir-rag', {
+      const response = await fetch('https://n8n.tomazbello.com/webhook/excluir-prod-rag', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -141,7 +142,7 @@ export const useProducts = () => {
 
       console.log('Enviando arquivo para o webhook:', file.name, 'categoria:', category);
       
-      const response = await fetch('https://n8n.tomazbello.com/webhook/envia_rag', {
+      const response = await fetch('https://n8n.tomazbello.com/webhook/envia_produto_rag', {
         method: 'POST',
         body: formData,
       });
