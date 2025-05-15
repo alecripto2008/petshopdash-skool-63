@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { FileUp, Upload, Loader2, FileText } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { v4 as uuidv4 } from 'uuid';
+import { FileService } from '@/services/FileService';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_FILE_TYPES = [
@@ -20,7 +22,8 @@ const ALLOWED_FILE_TYPES = [
   'application/vnd.ms-excel',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/plain'
 ];
 
 const formSchema = z.object({
@@ -31,7 +34,7 @@ const formSchema = z.object({
     .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, `Tamanho máximo do arquivo é 5MB.`)
     .refine(
       (files) => ALLOWED_FILE_TYPES.includes(files?.[0]?.type),
-      'Tipo de arquivo inválido. Selecione PDF, DOC, DOCX, XLS, XLSX, PPT ou PPTX.'
+      'Tipo de arquivo inválido. Selecione PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX ou TXT.'
     ),
 });
 
@@ -46,6 +49,7 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileService = new FileService();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -64,85 +68,6 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
       setSelectedFile(null);
       form.setValue('file', undefined, { shouldValidate: true });
     }
-  };
-
-  // Sanitize file names and paths to remove problematic characters
-  const sanitizeFileName = (fileName: string): string => {
-    return fileName
-      .replace(/[^\w\s.-]/g, '') // Remove special characters except dots, dashes, and underscores
-      .replace(/\s+/g, '_'); // Replace spaces with underscores
-  };
-
-  // IMPROVED: Better text extraction from files
-  const extractTextFromFile = async (file: File): Promise<string> => {
-    console.log('Extraindo texto do arquivo:', file.name, 'tipo:', file.type);
-    
-    // For PDF files: simply extract basic info if can't read content
-    if (file.type === 'application/pdf') {
-      return `Documento PDF: ${file.name}`;
-    }
-
-    // For text files: read as text
-    if (file.type.includes('text') || 
-        file.name.endsWith('.txt') || 
-        file.name.endsWith('.md')) {
-      try {
-        const text = await file.text();
-        return text || `Conteúdo do arquivo texto: ${file.name}`;
-      } catch (e) {
-        console.error('Erro ao ler arquivo de texto:', e);
-        return `Conteúdo do arquivo texto: ${file.name}`;
-      }
-    }
-
-    // For Office documents: extract basic info
-    if (file.type.includes('office') || file.type.includes('document') ||
-        file.name.endsWith('.doc') || file.name.endsWith('.docx') || 
-        file.name.endsWith('.xls') || file.name.endsWith('.xlsx') ||
-        file.name.endsWith('.ppt') || file.name.endsWith('.pptx')) {
-      return `Documento de escritório: ${file.name} (Tipo: ${file.type})`;
-    }
-
-    // Default for all other file types
-    return `Arquivo: ${file.name} (Tipo: ${file.type})`;
-  };
-
-  // Function to sanitize text content to remove problematic Unicode characters
-  const sanitizeTextContent = (text: string): string => {
-    if (!text) return '';
-    
-    // Remove null bytes, control characters and other problematic Unicode sequences
-    return text
-      .replace(/\0/g, '') // Remove null bytes
-      .replace(/\\u0000/g, '') // Remove escaped null bytes
-      .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
-      .replace(/\\u[0-9a-fA-F]{4}/g, '') // Remove Unicode escape sequences
-      .replace(/[^\x20-\x7E\xA0-\xFF\u0100-\uFFFF]/g, ' '); // Replace other non-standard chars with spaces
-  };
-
-  // IMPROVED: Format proper content and metadata with correct structure
-  const formatContentAndMetadata = (text: string, file: File, category: string) => {
-    // Prepare the proper metadata format with the EXACT structure requested
-    const metadata = {
-      loc: {
-        lines: {
-          from: 1,
-          to: text ? Math.min(text.split('\n').length, 100) : 1
-        }
-      },
-      source: "blob",
-      blobType: file.type || "text/plain",
-      category: category,
-      fileName: file.name,
-      size: `${(file.size / 1024).toFixed(0)} KB`,
-      type: file.type || "unknown",
-      uploadDate: new Date().toISOString()
-    };
-
-    return { 
-      content: text || `Conteúdo do arquivo: ${file.name}`,
-      metadata
-    };
   };
 
   // Function to check and create bucket if it doesn't exist
@@ -190,7 +115,7 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
       throw new Error("Não foi possível criar ou verificar o bucket de armazenamento");
     }
     
-    const sanitizedFileName = sanitizeFileName(`${uuidv4()}-${file.name}`);
+    const sanitizedFileName = fileService.sanitizeFileName(`${uuidv4()}-${file.name}`);
     const filePath = `${sanitizedFileName}`;
     
     const { error: uploadError } = await supabase.storage
@@ -219,20 +144,24 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
     let uploadedFilePath: string | null = null;
     
     try {
-      // IMPROVED: Extract and sanitize file content
-      const fileContent = await extractTextFromFile(selectedFile);
-      const sanitizedContent = sanitizeTextContent(fileContent);
+      // Extract text content from file
+      const fileContent = await fileService.extractTextFromFile(selectedFile);
+      console.log('Conteúdo extraído do arquivo, tamanho:', fileContent.length);
       
-      console.log('Conteúdo extraído e sanitizado, tamanho:', sanitizedContent.length);
+      // Sanitize the content
+      const sanitizedContent = fileService.sanitizeTextContent(fileContent);
+      console.log('Conteúdo sanitizado, tamanho:', sanitizedContent.length);
       
-      // IMPROVED: Format content and metadata properly with the exact required structure
-      const { content, metadata } = formatContentAndMetadata(sanitizedContent, selectedFile, values.category);
+      // Format content and metadata with proper structure
+      const { content, metadata } = fileService.formatContentAndMetadata(sanitizedContent, selectedFile, values.category);
       
-      console.log('Metadata formatado:', metadata);
+      console.log('Metadata formatado:', JSON.stringify(metadata).substring(0, 200));
+      console.log('Content formatado (primeiros 100 chars):', content.substring(0, 100));
       
-      // Try to upload file
+      // Try to upload file to storage
       try {
         uploadedFilePath = await uploadFile(selectedFile, values.category);
+        console.log('Arquivo enviado para storage com sucesso:', uploadedFilePath);
       } catch (error: any) {
         console.error("Upload error:", error);
         toast({
@@ -242,15 +171,16 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
         });
       }
       
-      // Save product metadata to database with sanitized content
+      // Save product metadata to database with text content
       const { error: insertError } = await supabase.from('products').insert({
         titulo: values.category,
-        content: content, // Using the text content, not PDF
-        metadata: metadata // Using the correctly structured metadata
+        content: content, // Content as extracted text
+        metadata: metadata // Properly structured metadata
       });
 
       if (insertError) {
         if (uploadedFilePath) {
+          // Clean up file if database insertion failed
           await supabase.storage.from('product-files').remove([uploadedFilePath]);
         }
         throw insertError;
@@ -321,7 +251,7 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
                         ref={fileInputRef}
                         className="hidden"
                         onChange={handleFileChange}
-                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
                       />
                       <label
                         htmlFor="product-file-upload-revised"
@@ -332,7 +262,7 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
                           Clique para selecionar ou arraste o arquivo aqui
                         </p>
                         <p className="text-xs text-gray-400 dark:text-gray-500">
-                          PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX (Máx 5MB)
+                          PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT (Máx 5MB)
                         </p>
                       </label>
                     </div>
