@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Conversation } from '@/types/chat';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ClientInfoPanelProps {
   selectedChat: string | null;
@@ -12,6 +13,8 @@ interface ClientInfoPanelProps {
 }
 
 const ClientInfoPanel = ({ selectedChat, selectedConversation }: ClientInfoPanelProps) => {
+  const isMobile = useIsMobile();
+  
   if (!selectedChat) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
