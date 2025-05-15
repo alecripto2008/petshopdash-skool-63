@@ -46,12 +46,28 @@ const AddDocumentDialog: React.FC<AddDocumentDialogProps> = ({
     },
   });
 
+  // Reset form when dialog closes
+  React.useEffect(() => {
+    if (!isOpen) {
+      form.reset();
+      setSelectedFile(null);
+      setIsUploading(false);
+    }
+  }, [isOpen, form]);
+
   // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       setSelectedFile(file);
       form.setValue('file', file);
+      
+      // Log file details for debugging
+      console.log('Arquivo selecionado:', {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      });
     }
   };
 
@@ -61,9 +77,8 @@ const AddDocumentDialog: React.FC<AddDocumentDialogProps> = ({
       setIsUploading(true);
       try {
         await onAddDocument(selectedFile, values.category);
-        setSelectedFile(null);
-        form.reset();
-        onOpenChange(false);
+      } catch (error) {
+        console.error('Erro durante upload:', error);
       } finally {
         setIsUploading(false);
       }
@@ -97,7 +112,7 @@ const AddDocumentDialog: React.FC<AddDocumentDialogProps> = ({
                 Clique para selecionar ou arraste o arquivo aqui
               </p>
               <p className="text-xs text-gray-400 dark:text-gray-500">
-                PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX
+                PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT
               </p>
             </label>
           </div>

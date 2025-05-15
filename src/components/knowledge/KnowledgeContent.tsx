@@ -29,6 +29,8 @@ const KnowledgeContent = () => {
           title: "Documento adicionado",
           description: "O documento foi adicionado com sucesso.",
         });
+        setIsAddDocumentOpen(false); // Fechar o diálogo após sucesso
+        handleRefresh(); // Atualizar a lista de documentos
       }
     } catch (error) {
       toast({
@@ -36,7 +38,7 @@ const KnowledgeContent = () => {
         description: "Não foi possível adicionar o documento.",
         variant: "destructive",
       });
-      console.error('Error uploading document:', error);
+      console.error('Erro ao fazer upload do documento:', error);
     }
   };
 

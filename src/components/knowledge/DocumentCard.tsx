@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FileText, Trash2 } from 'lucide-react';
+import { FileText, Trash2, Tag, Calendar } from 'lucide-react';
 import { 
   Card, 
   CardHeader, 
@@ -8,6 +8,7 @@ import {
   CardContent, 
   CardFooter 
 } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from '@/components/ui/dialog';
 
 interface Document {
@@ -45,8 +47,20 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          <div>Adicionado: {document.uploadedAt}</div>
+        <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
+          <div className="flex items-center">
+            <Tag className="h-4 w-4 mr-2" />
+            <span>Categoria: {document.category}</span>
+          </div>
+          <div className="flex items-center">
+            <Calendar className="h-4 w-4 mr-2" />
+            <span>Adicionado: {document.uploadedAt}</span>
+          </div>
+          {document.size && (
+            <Badge variant="outline" className="text-xs">
+              {document.size}
+            </Badge>
+          )}
         </div>
       </CardContent>
       <CardFooter className="flex justify-end">
@@ -65,11 +79,13 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
             <DialogHeader>
               <DialogTitle>Excluir Documento</DialogTitle>
               <DialogDescription>
-                Esta ação não pode ser desfeita. Tem certeza que deseja excluir o documento?
+                Esta ação não pode ser desfeita. Tem certeza que deseja excluir o documento "{document.name}"?
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="outline">Cancelar</Button>
+              <DialogClose asChild>
+                <Button variant="outline">Cancelar</Button>
+              </DialogClose>
               <Button 
                 variant="destructive" 
                 onClick={() => onDelete(document.id, document.titulo || document.name)}

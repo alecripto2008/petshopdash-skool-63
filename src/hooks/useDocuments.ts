@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 
 // Document type definition with updated type for metadata
 export interface Document {
@@ -39,7 +38,7 @@ export const useDocuments = () => {
         .select('*');
 
       if (error) {
-        console.error('Error fetching documents:', error);
+        console.error('Erro ao buscar documentos:', error);
         toast({
           title: "Erro ao carregar documentos",
           description: error.message,
@@ -47,6 +46,8 @@ export const useDocuments = () => {
         });
         return;
       }
+
+      console.log('Documentos recuperados:', data);
 
       // Transform the data to match our Document interface with proper type handling
       const formattedDocs: Document[] = data.map((doc) => {
@@ -82,7 +83,7 @@ export const useDocuments = () => {
       
       setDocuments(uniqueDocs);
     } catch (err) {
-      console.error('Unexpected error fetching documents:', err);
+      console.error('Erro inesperado ao buscar documentos:', err);
       toast({
         title: "Erro inesperado",
         description: "Não foi possível carregar os documentos.",
@@ -137,7 +138,7 @@ export const useDocuments = () => {
         variant: "default",
       });
     } catch (err) {
-      console.error('Unexpected error deleting document:', err);
+      console.error('Erro inesperado ao excluir documento:', err);
       toast({
         title: "Erro inesperado",
         description: "Não foi possível excluir o documento.",
@@ -166,7 +167,7 @@ export const useDocuments = () => {
         variant: "default",
       });
     } catch (err) {
-      console.error('Unexpected error clearing knowledge base:', err);
+      console.error('Erro inesperado ao limpar base de conhecimento:', err);
       toast({
         title: "Erro inesperado",
         description: "Não foi possível limpar a base de conhecimento.",
@@ -178,37 +179,49 @@ export const useDocuments = () => {
   // Upload file to Supabase
   const uploadFileToWebhook = async (file: File, category: string) => {
     try {
+      console.log('Enviando arquivo:', file.name, 'categoria:', category);
+      
       // Create a simplified file reader to extract text content
       const fileContent = await readFileAsText(file);
+      console.log('Conteúdo extraído, tamanho:', fileContent ? fileContent.length : 0);
       
       // Prepare metadata
       const metadata = {
         category: category,
         fileName: file.name,
-        fileType: file.type,
+        type: file.type,
         size: `${(file.size / 1024).toFixed(0)} KB`,
         uploadDate: new Date().toISOString()
       };
       
-      // Insert document into Supabase
+      console.log('Metadata preparado:', metadata);
+      
+      // Insertion payload
+      const insertData = {
+        titulo: file.name,
+        content: fileContent?.substring(0, 10000) || 'Sem conteúdo extraído', // Limit content length
+        metadata: metadata
+      };
+      
+      console.log('Enviando para o Supabase:', insertData);
+      
+      // Insert document into Supabase - CORREÇÃO AQUI
       const { data, error } = await supabase
         .from('documents')
-        .insert({
-          titulo: file.name,
-          content: fileContent?.substring(0, 10000) || 'No content extracted', // Limit content length
-          metadata: metadata
-        })
+        .insert(insertData)
         .select();
         
       if (error) {
-        console.error('Error saving document:', error);
+        console.error('Erro ao salvar documento:', error);
         toast({
           title: "Erro ao salvar documento",
-          description: "Não foi possível salvar o documento no banco de dados.",
+          description: "Não foi possível salvar o documento no banco de dados: " + error.message,
           variant: "destructive",
         });
         return false;
       }
+      
+      console.log('Documento salvo com sucesso:', data);
       
       // Update the documents list with the new document
       if (data && data.length > 0) {
