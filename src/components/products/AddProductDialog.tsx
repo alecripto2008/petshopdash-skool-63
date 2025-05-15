@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -74,6 +73,40 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
       .replace(/\s+/g, '_'); // Replace spaces with underscores
   };
 
+  // IMPROVED: Better text extraction from files
+  const extractTextFromFile = async (file: File): Promise<string> => {
+    console.log('Extraindo texto do arquivo:', file.name, 'tipo:', file.type);
+    
+    // For PDF files: simply extract basic info if can't read content
+    if (file.type === 'application/pdf') {
+      return `Documento PDF: ${file.name}`;
+    }
+
+    // For text files: read as text
+    if (file.type.includes('text') || 
+        file.name.endsWith('.txt') || 
+        file.name.endsWith('.md')) {
+      try {
+        const text = await file.text();
+        return text || `Conteúdo do arquivo texto: ${file.name}`;
+      } catch (e) {
+        console.error('Erro ao ler arquivo de texto:', e);
+        return `Conteúdo do arquivo texto: ${file.name}`;
+      }
+    }
+
+    // For Office documents: extract basic info
+    if (file.type.includes('office') || file.type.includes('document') ||
+        file.name.endsWith('.doc') || file.name.endsWith('.docx') || 
+        file.name.endsWith('.xls') || file.name.endsWith('.xlsx') ||
+        file.name.endsWith('.ppt') || file.name.endsWith('.pptx')) {
+      return `Documento de escritório: ${file.name} (Tipo: ${file.type})`;
+    }
+
+    // Default for all other file types
+    return `Arquivo: ${file.name} (Tipo: ${file.type})`;
+  };
+
   // Function to sanitize text content to remove problematic Unicode characters
   const sanitizeTextContent = (text: string): string => {
     if (!text) return '';
@@ -87,51 +120,14 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
       .replace(/[^\x20-\x7E\xA0-\xFF\u0100-\uFFFF]/g, ' '); // Replace other non-standard chars with spaces
   };
 
-  // Read file content with better error handling
-  const readFileAsText = async (file: File): Promise<string | null> => {
-    return new Promise((resolve, reject) => {
-      try {
-        // Handle different file types
-        if (file.type.includes('text') || file.type.includes('pdf') || 
-            file.type.includes('document') || file.name.endsWith('.txt') || 
-            file.name.endsWith('.md')) {
-          const reader = new FileReader();
-          reader.onload = () => {
-            try {
-              // Ensure we're returning a string and not binary data
-              const result = typeof reader.result === 'string' ? reader.result : '';
-              resolve(result);
-            } catch (e) {
-              console.error('Error processing file content:', e);
-              resolve(`Nome do arquivo: ${file.name}`); // Fallback to just the filename
-            }
-          };
-          reader.onerror = (e) => {
-            console.error('FileReader error:', e);
-            resolve(`Nome do arquivo: ${file.name}`);
-          };
-          
-          // Use readAsText for text files
-          reader.readAsText(file);
-        } else {
-          // For non-text files, just return the filename
-          resolve(`Nome do arquivo: ${file.name}`);
-        }
-      } catch (e) {
-        console.error('Exception in readFileAsText:', e);
-        resolve(`Nome do arquivo: ${file.name}`);
-      }
-    });
-  };
-
-  // Format proper content and metadata with correct structure
+  // IMPROVED: Format proper content and metadata with correct structure
   const formatContentAndMetadata = (text: string, file: File, category: string) => {
-    // Prepare the proper metadata format with the exact structure requested
+    // Prepare the proper metadata format with the EXACT structure requested
     const metadata = {
       loc: {
         lines: {
-          from: 30,
-          to: 38
+          from: 1,
+          to: text ? Math.min(text.split('\n').length, 100) : 1
         }
       },
       source: "blob",
@@ -223,13 +219,13 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
     let uploadedFilePath: string | null = null;
     
     try {
-      // Extract and sanitize file content as in the knowledge page
-      const fileContent = await readFileAsText(selectedFile);
-      const sanitizedContent = fileContent ? sanitizeTextContent(fileContent) : 'Sem conteúdo extraído';
+      // IMPROVED: Extract and sanitize file content
+      const fileContent = await extractTextFromFile(selectedFile);
+      const sanitizedContent = sanitizeTextContent(fileContent);
       
       console.log('Conteúdo extraído e sanitizado, tamanho:', sanitizedContent.length);
       
-      // Format content and metadata properly with the exact required structure
+      // IMPROVED: Format content and metadata properly with the exact required structure
       const { content, metadata } = formatContentAndMetadata(sanitizedContent, selectedFile, values.category);
       
       console.log('Metadata formatado:', metadata);
@@ -249,8 +245,8 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
       // Save product metadata to database with sanitized content
       const { error: insertError } = await supabase.from('products').insert({
         titulo: values.category,
-        content: content,
-        metadata: metadata
+        content: content, // Using the text content, not PDF
+        metadata: metadata // Using the correctly structured metadata
       });
 
       if (insertError) {

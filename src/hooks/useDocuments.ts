@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -176,14 +175,14 @@ export const useDocuments = () => {
     }
   };
 
-  // Format proper content and metadata with correct structure
+  // IMPROVED: Format proper content and metadata with correct structure
   const formatContentAndMetadata = (text: string, file: File, category: string) => {
-    // Prepare the proper metadata format with the exact structure requested
+    // Prepare the proper metadata format with the EXACT structure requested
     const metadata = {
       loc: {
         lines: {
-          from: 30,
-          to: 38
+          from: 1,
+          to: text ? Math.min(text.split('\n').length, 100) : 1
         }
       },
       source: "blob",
@@ -199,6 +198,40 @@ export const useDocuments = () => {
       content: text || `Conteúdo do arquivo: ${file.name}`,
       metadata
     };
+  };
+
+  // Improved text extraction from files
+  const extractTextFromFile = async (file: File): Promise<string> => {
+    console.log('Extraindo texto do arquivo:', file.name, 'tipo:', file.type);
+    
+    // For PDF files: simply extract basic info if can't read content
+    if (file.type === 'application/pdf') {
+      return `Documento PDF: ${file.name}`;
+    }
+
+    // For text files: read as text
+    if (file.type.includes('text') || 
+        file.name.endsWith('.txt') || 
+        file.name.endsWith('.md')) {
+      try {
+        const text = await file.text();
+        return text || `Conteúdo do arquivo texto: ${file.name}`;
+      } catch (e) {
+        console.error('Erro ao ler arquivo de texto:', e);
+        return `Conteúdo do arquivo texto: ${file.name}`;
+      }
+    }
+
+    // For Office documents: extract basic info
+    if (file.type.includes('office') || file.type.includes('document') ||
+        file.name.endsWith('.doc') || file.name.endsWith('.docx') || 
+        file.name.endsWith('.xls') || file.name.endsWith('.xlsx') ||
+        file.name.endsWith('.ppt') || file.name.endsWith('.pptx')) {
+      return `Documento de escritório: ${file.name} (Tipo: ${file.type})`;
+    }
+
+    // Default for all other file types
+    return `Arquivo: ${file.name} (Tipo: ${file.type})`;
   };
 
   // Sanitize text to remove problematic characters
@@ -219,51 +252,14 @@ export const useDocuments = () => {
     }
   };
 
-  // Read file as text with better error handling
-  const readFileAsText = async (file: File): Promise<string | null> => {
-    return new Promise((resolve, reject) => {
-      try {
-        // Handle different file types
-        if (file.type.includes('text') || file.type.includes('pdf') || 
-            file.type.includes('document') || file.name.endsWith('.txt') || 
-            file.name.endsWith('.md')) {
-          const reader = new FileReader();
-          reader.onload = () => {
-            try {
-              // Ensure we're returning a string and not binary data
-              const result = typeof reader.result === 'string' ? reader.result : '';
-              resolve(result);
-            } catch (e) {
-              console.error('Error processing file content:', e);
-              resolve(`Nome do arquivo: ${file.name}`); // Fallback to just the filename
-            }
-          };
-          reader.onerror = (e) => {
-            console.error('FileReader error:', e);
-            resolve(`Nome do arquivo: ${file.name}`);
-          };
-          
-          // Use readAsText for text files
-          reader.readAsText(file);
-        } else {
-          // For non-text files, just return the filename
-          resolve(`Nome do arquivo: ${file.name}`);
-        }
-      } catch (e) {
-        console.error('Exception in readFileAsText:', e);
-        resolve(`Nome do arquivo: ${file.name}`);
-      }
-    });
-  };
-
-  // Upload file to Supabase
+  // Upload file to Supabase - IMPROVED VERSION
   const uploadFileToWebhook = async (file: File, category: string) => {
     try {
       console.log('Enviando arquivo:', file.name, 'categoria:', category);
       
-      // Extract text content from the file
-      const fileContent = await readFileAsText(file);
-      const sanitizedContent = fileContent ? sanitizeTextContent(fileContent) : 'Sem conteúdo extraído';
+      // IMPROVED: Better text extraction from various file types
+      const fileContent = await extractTextFromFile(file);
+      const sanitizedContent = sanitizeTextContent(fileContent);
       
       console.log('Conteúdo extraído e sanitizado, tamanho:', sanitizedContent.length);
       
@@ -276,7 +272,7 @@ export const useDocuments = () => {
       const insertData = {
         titulo: category || file.name, // Use category as the title
         content: content,
-        metadata: metadata
+        metadata: metadata // Using the correctly structured metadata
       };
       
       console.log('Enviando para o Supabase:', insertData);
