@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -175,9 +176,9 @@ export const useDocuments = () => {
     }
   };
 
-  // IMPROVED: Format proper content and metadata with correct structure
+  // CORRIGIDO: Formatação correta do content e metadata com a estrutura exata solicitada
   const formatContentAndMetadata = (text: string, file: File, category: string) => {
-    // Prepare the proper metadata format with the EXACT structure requested
+    // Prepara o metadata com a estrutura EXATA solicitada
     const metadata = {
       loc: {
         lines: {
@@ -200,38 +201,110 @@ export const useDocuments = () => {
     };
   };
 
-  // Improved text extraction from files
+  // CORRIGIDO: Extração melhorada de texto de arquivos PDF e outros tipos
   const extractTextFromFile = async (file: File): Promise<string> => {
     console.log('Extraindo texto do arquivo:', file.name, 'tipo:', file.type);
     
-    // For PDF files: simply extract basic info if can't read content
+    // Para arquivos PDF: extrair informações básicas
     if (file.type === 'application/pdf') {
-      return `Documento PDF: ${file.name}`;
+      try {
+        // Tenta ler o conteúdo como texto
+        const text = await readFileAsText(file);
+        if (text && text.length > 0) {
+          console.log('Texto extraído do PDF:', text.substring(0, 100) + '...');
+          return text;
+        } else {
+          return `Documento PDF: ${file.name} (Texto extraído não disponível)`;
+        }
+      } catch (e) {
+        console.error('Erro ao ler PDF como texto:', e);
+        return `Documento PDF: ${file.name} - O conteúdo não pôde ser extraído como texto`;
+      }
     }
 
-    // For text files: read as text
+    // Para arquivos de texto: ler como texto
     if (file.type.includes('text') || 
         file.name.endsWith('.txt') || 
         file.name.endsWith('.md')) {
       try {
-        const text = await file.text();
+        const text = await readFileAsText(file);
         return text || `Conteúdo do arquivo texto: ${file.name}`;
       } catch (e) {
         console.error('Erro ao ler arquivo de texto:', e);
-        return `Conteúdo do arquivo texto: ${file.name}`;
+        return `Conteúdo do arquivo texto: ${file.name} (Não foi possível ler o conteúdo)`;
       }
     }
 
-    // For Office documents: extract basic info
+    // Para documentos do Office: extrair informações básicas e tentar ler como texto
     if (file.type.includes('office') || file.type.includes('document') ||
         file.name.endsWith('.doc') || file.name.endsWith('.docx') || 
         file.name.endsWith('.xls') || file.name.endsWith('.xlsx') ||
         file.name.endsWith('.ppt') || file.name.endsWith('.pptx')) {
-      return `Documento de escritório: ${file.name} (Tipo: ${file.type})`;
+      try {
+        // Tenta ler o conteúdo como texto
+        const text = await readFileAsText(file);
+        if (text && text.length > 0) {
+          return text;
+        } else {
+          return `Documento de escritório: ${file.name} (Tipo: ${file.type})`;
+        }
+      } catch (e) {
+        console.error('Erro ao ler documento do Office como texto:', e);
+        return `Documento de escritório: ${file.name} (Tipo: ${file.type})`;
+      }
     }
 
-    // Default for all other file types
-    return `Arquivo: ${file.name} (Tipo: ${file.type})`;
+    // Para todos os outros tipos de arquivo
+    try {
+      const text = await readFileAsText(file);
+      if (text && text.length > 0) {
+        return text;
+      } else {
+        return `Arquivo: ${file.name} (Tipo: ${file.type})`;
+      }
+    } catch (e) {
+      console.error('Erro ao ler arquivo genérico como texto:', e);
+      return `Arquivo: ${file.name} (Tipo: ${file.type})`;
+    }
+  };
+
+  // ADICIONADO: Função auxiliar para tentar ler qualquer arquivo como texto
+  const readFileAsText = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (event) => {
+        try {
+          const result = event.target?.result;
+          if (typeof result === 'string') {
+            resolve(result);
+          } else {
+            // Se não for string, converter ArrayBuffer para string
+            if (result instanceof ArrayBuffer) {
+              const textDecoder = new TextDecoder('utf-8');
+              resolve(textDecoder.decode(result));
+            } else {
+              resolve('');
+            }
+          }
+        } catch (e) {
+          console.error('Erro ao processar resultado de leitura:', e);
+          resolve('');
+        }
+      };
+      
+      reader.onerror = (error) => {
+        console.error('Erro na leitura do arquivo:', error);
+        reject(error);
+      };
+      
+      try {
+        reader.readAsText(file);
+      } catch (e) {
+        console.error('Exceção ao tentar ler como texto:', e);
+        reject(e);
+      }
+    });
   };
 
   // Sanitize text to remove problematic characters
@@ -252,32 +325,34 @@ export const useDocuments = () => {
     }
   };
 
-  // Upload file to Supabase - IMPROVED VERSION
+  // CORRIGIDO: Upload de arquivo para Supabase - garante conteúdo como texto
   const uploadFileToWebhook = async (file: File, category: string) => {
     try {
       console.log('Enviando arquivo:', file.name, 'categoria:', category);
       
-      // IMPROVED: Better text extraction from various file types
+      // CORRIGIDO: Melhor extração de texto de vários tipos de arquivo
       const fileContent = await extractTextFromFile(file);
+      console.log('Conteúdo extraído, tamanho:', fileContent.length);
+      
       const sanitizedContent = sanitizeTextContent(fileContent);
+      console.log('Conteúdo sanitizado, tamanho:', sanitizedContent.length);
       
-      console.log('Conteúdo extraído e sanitizado, tamanho:', sanitizedContent.length);
-      
-      // Format content and metadata properly with the exact required structure
+      // Formata conteúdo e metadata corretamente com a estrutura exata necessária
       const { content, metadata } = formatContentAndMetadata(sanitizedContent, file, category);
       
       console.log('Metadata formatado:', metadata);
+      console.log('Content formatado (primeiros 100 chars):', content.substring(0, 100));
       
-      // Prepare insertion data
+      // Prepara dados para inserção
       const insertData = {
-        titulo: category || file.name, // Use category as the title
-        content: content,
-        metadata: metadata // Using the correctly structured metadata
+        titulo: category || file.name, // Usa a categoria como título
+        content: content, // Usando o conteúdo como texto, não como PDF binário
+        metadata: metadata // Usando o metadata corretamente estruturado
       };
       
       console.log('Enviando para o Supabase:', insertData);
       
-      // Insert document into Supabase
+      // Insere documento no Supabase
       const { data, error } = await supabase
         .from('documents')
         .insert(insertData)
@@ -295,9 +370,9 @@ export const useDocuments = () => {
       
       console.log('Documento salvo com sucesso:', data);
       
-      // Update the documents list with the new document
+      // Atualiza a lista de documentos com o novo documento
       if (data && data.length > 0) {
-        // Create a new document with the correct metadata format
+        // Cria um novo documento com o formato correto de metadata
         const newDoc: Document = {
           id: data[0].id,
           name: category || file.name,
