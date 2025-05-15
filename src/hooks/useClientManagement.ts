@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { Contact } from '@/types/client';
 import { useClientActions } from './useClientActions';
 import { useClientMessage } from './useClientMessage';
 import { useClientDialogs } from './useClientDialogs';
-import { toast } from '@/components/ui/use-toast'; // Importando a função toast
+import { toast } from '@/hooks/use-toast'; // Importando a função toast
 
 export const useClientManagement = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -63,7 +64,7 @@ export const useClientManagement = () => {
       return;
     }
     const result = await addClient(newContact);
-    if (result && result.success) {
+    if (result) {
       setIsAddContactOpen(false);
       handleRefresh();
       setNewContact({
@@ -87,7 +88,7 @@ export const useClientManagement = () => {
     } else {
       toast({
         title: "Erro ao Adicionar Cliente",
-        description: result?.error || "Não foi possível adicionar o cliente. Tente novamente.",
+        description: "Não foi possível adicionar o cliente. Tente novamente.",
         variant: "destructive",
       });
     }
@@ -105,7 +106,7 @@ export const useClientManagement = () => {
       return;
     }
     const result = await updateClient(selectedContact.id, newContact);
-    if (result && result.success) {
+    if (result) {
       handleRefresh();
       setIsEditModalOpen(false);
       toast({
@@ -116,7 +117,7 @@ export const useClientManagement = () => {
     } else {
       toast({
         title: "Erro ao Editar Cliente",
-        description: result?.error || "Não foi possível atualizar o cliente. Tente novamente.",
+        description: "Não foi possível atualizar o cliente. Tente novamente.",
         variant: "destructive",
       });
     }
@@ -126,7 +127,7 @@ export const useClientManagement = () => {
     if (!selectedContact) return;
     
     const result = await deleteClient(selectedContact.id, selectedContact.phone || '');
-    if (result && result.success) {
+    if (result) {
       handleRefresh();
       setSelectedContact(null);
       setIsDetailSheetOpen(false);
@@ -139,7 +140,7 @@ export const useClientManagement = () => {
     } else {
       toast({
         title: "Erro ao Excluir Cliente",
-        description: result?.error || "Não foi possível excluir o cliente. Tente novamente.",
+        description: "Não foi possível excluir o cliente. Tente novamente.",
         variant: "destructive",
       });
     }
@@ -197,7 +198,7 @@ export const useClientManagement = () => {
     }
     
     const result = await sendMessage(selectedContact.phone, messageText, duration);
-    if (result && result.success) {
+    if (result) {
       setIsPauseDurationDialogOpen(false);
       setMessageText(''); // Limpa o texto da mensagem após o envio
       toast({
@@ -209,7 +210,7 @@ export const useClientManagement = () => {
       setIsPauseDurationDialogOpen(false); // Fecha o diálogo mesmo em caso de erro
       toast({
         title: "Erro ao Enviar Mensagem",
-        description: result?.error || "Não foi possível enviar a mensagem. Tente novamente.",
+        description: "Não foi possível enviar a mensagem. Tente novamente.",
         variant: "destructive",
       });
     }

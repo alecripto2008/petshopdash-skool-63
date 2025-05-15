@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { FileUp, Upload, Loader2, FileText } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -129,8 +130,8 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
       });
       // Se houve um erro após o upload bem-sucedido mas antes da inserção no DB (ou durante a inserção),
       // e o arquivo foi enviado, tentar removê-lo do storage
-      if (uploadError && uploadedFilePath && !insertError) { // Correção: uploadError não é o ideal aqui, mas se upload falhou, não há o que remover
-        // A lógica de remoção já está no bloco de insertError
+      if (uploadedFilePath) {
+        await supabase.storage.from('product-files').remove([uploadedFilePath]);
       }
     } finally {
       setIsUploading(false);
@@ -255,4 +256,3 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
 };
 
 export default AddProductDialog;
-

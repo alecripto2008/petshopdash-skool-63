@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 
-// Document type definition
+// Document type definition with updated type for metadata
 export interface Document {
   id: number;
   name: string;
@@ -48,21 +48,28 @@ export const useDocuments = () => {
         return;
       }
 
-      // Transform the data to match our Document interface
-      const formattedDocs: Document[] = data.map((doc, index) => {
+      // Transform the data to match our Document interface with proper type handling
+      const formattedDocs: Document[] = data.map((doc) => {
         // Use titulo from the database if available, otherwise generate a name
-        const documentName = doc.titulo || `Documento ${index + 1}`;
+        const documentName = doc.titulo || `Documento ${doc.id}`;
         
-        // Create Document object with available fields
+        // Parse metadata if it's a string
+        const parsedMetadata = typeof doc.metadata === 'string' 
+          ? JSON.parse(doc.metadata) 
+          : doc.metadata;
+        
+        // Create Document object with available fields and safe access
         return {
           id: doc.id,
           name: documentName,
-          type: doc.metadata?.type || 'unknown',
-          size: doc.metadata?.size || 'Unknown',
-          category: doc.metadata?.category || 'Sem categoria',
-          uploadedAt: doc.created_at ? new Date(doc.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          type: parsedMetadata && typeof parsedMetadata === 'object' ? (parsedMetadata.type || 'unknown') : 'unknown',
+          size: parsedMetadata && typeof parsedMetadata === 'object' ? (parsedMetadata.size || 'Unknown') : 'Unknown',
+          category: parsedMetadata && typeof parsedMetadata === 'object' ? (parsedMetadata.category || 'Sem categoria') : 'Sem categoria',
+          uploadedAt: doc.created_at 
+            ? new Date(doc.created_at).toISOString().split('T')[0] 
+            : new Date().toISOString().split('T')[0],
           titulo: doc.titulo,
-          metadata: doc.metadata,
+          metadata: parsedMetadata,
         };
       });
 
