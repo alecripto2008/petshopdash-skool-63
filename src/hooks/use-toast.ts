@@ -1,6 +1,5 @@
 
 import { Toast, ToastActionElement, ToastProps } from "@/components/ui/toast";
-import { useToast as useToastOriginal } from "@radix-ui/react-toast";
 import * as React from "react";
 
 export type ToastData = Omit<ToastProps, "id"> & {
