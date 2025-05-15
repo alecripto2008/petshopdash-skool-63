@@ -22,6 +22,7 @@ const PaymentsContent = () => {
     type: '',
     description: '',
     value: '',
+    typeservice: '',
   });
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
   const { toast } = useToast();
@@ -51,7 +52,8 @@ const PaymentsContent = () => {
   const filteredPayments = payments?.filter(payment =>
     payment.client?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     payment.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    payment.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    payment.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    payment.typeservice?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const groupedPayments: GroupedPayments[] = groupPaymentsByMonth(filteredPayments || []);
@@ -92,6 +94,7 @@ const PaymentsContent = () => {
         type: newPayment.type,
         description: newPayment.description,
         value: numericValue,
+        typeservice: newPayment.typeservice,
       });
 
     if (error) {
@@ -114,6 +117,7 @@ const PaymentsContent = () => {
       type: '',
       description: '',
       value: '',
+      typeservice: '',
     });
     setIsDialogOpen(false);
     
@@ -156,8 +160,10 @@ const PaymentsContent = () => {
                     <div className="grid grid-cols-2 gap-2">
                       <div className="text-sm font-medium">Cliente</div>
                       <div className="text-sm">{payment.client}</div>
-                      <div className="text-sm font-medium">Tipo</div>
+                      <div className="text-sm font-medium">Forma de Pagamento</div>
                       <div className="text-sm">{payment.type}</div>
+                      <div className="text-sm font-medium">Tipo de Serviço</div>
+                      <div className="text-sm">{payment.typeservice}</div>
                       <div className="text-sm font-medium">Descrição</div>
                       <div className="text-sm">{payment.description}</div>
                       <div className="text-sm font-medium">Valor</div>
@@ -218,7 +224,8 @@ const PaymentsContent = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Cliente</TableHead>
-                <TableHead>Tipo</TableHead>
+                <TableHead>Forma de Pagamento</TableHead>
+                <TableHead>Tipo de Serviço</TableHead>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead>Data</TableHead>
@@ -229,6 +236,7 @@ const PaymentsContent = () => {
                 <TableRow key={payment.id}>
                   <TableCell>{payment.client}</TableCell>
                   <TableCell>{payment.type}</TableCell>
+                  <TableCell>{payment.typeservice}</TableCell>
                   <TableCell>{payment.description}</TableCell>
                   <TableCell>{formatCurrency(Number(payment.value))}</TableCell>
                   <TableCell>
@@ -239,7 +247,7 @@ const PaymentsContent = () => {
             </TableBody>
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={3}>Total do mês</TableCell>
+                <TableCell colSpan={4}>Total do mês</TableCell>
                 <TableCell colSpan={2} className="text-right font-bold">
                   {formatCurrency(total)}
                 </TableCell>
@@ -329,7 +337,7 @@ const PaymentsContent = () => {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="type" className="text-right">
-                Tipo
+                Forma de Pagamento
               </Label>
               <Input
                 id="type"
@@ -337,6 +345,20 @@ const PaymentsContent = () => {
                 value={newPayment.type}
                 onChange={handleInputChange}
                 className="col-span-3"
+                placeholder="Pix, Dinheiro, Crédito, Débito"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="typeservice" className="text-right">
+                Tipo de Serviço
+              </Label>
+              <Input
+                id="typeservice"
+                name="typeservice"
+                value={newPayment.typeservice}
+                onChange={handleInputChange}
+                className="col-span-3"
+                placeholder="Serviço, Produto, Consulta, etc."
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
