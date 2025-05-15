@@ -67,6 +67,30 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
     }
   };
 
+  // Sanitize file names and paths to remove problematic characters
+  const sanitizeFileName = (fileName: string): string => {
+    return fileName
+      .replace(/[^\w\s.-]/g, '') // Remove special characters except dots, dashes, and underscores
+      .replace(/\s+/g, '_'); // Replace spaces with underscores
+  };
+
+  // Function to handle file upload with proper error handling
+  const uploadFile = async (file: File, category: string): Promise<string> => {
+    const sanitizedFileName = sanitizeFileName(`${uuidv4()}-${file.name}`);
+    const filePath = `product-files/${sanitizedFileName}`;
+    
+    const { error: uploadError } = await supabase.storage
+      .from('product-files') 
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error("File upload error:", uploadError);
+      throw new Error(`Erro ao fazer upload: ${uploadError.message}`);
+    }
+
+    return filePath;
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!selectedFile) {
       toast({
@@ -78,32 +102,20 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
     }
 
     setIsUploading(true);
-    let uploadedFilePath: string | null = null; // Para rastrear o arquivo no storage
+    let uploadedFilePath: string | null = null;
+    
     try {
-      const fileName = `${uuidv4()}-${selectedFile.name}`;
-      const filePath = `product-files/${fileName}`;
-      uploadedFilePath = filePath; // Salva o path para possível remoção em caso de erro
+      // Upload file with sanitized file name
+      uploadedFilePath = await uploadFile(selectedFile, values.category);
 
-      // 1. Upload do selectedFile para o Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('product-files') 
-        .upload(filePath, selectedFile);
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      // 2. Salvar na tabela 'products' do Supabase: APENAS o titulo (category)
-      // A URL do arquivo NÃO será salva na tabela 'products'
+      // Save product metadata to database
       const { error: insertError } = await supabase.from('products').insert({
         titulo: values.category, // Usando 'category' do formulário como 'titulo'
-        // file_url: fileUrl, // REMOVIDO - Não salvar a URL do arquivo na tabela
       });
 
       if (insertError) {
-        // Se a inserção no DB falhou, remover o arquivo do storage que foi enviado
         if (uploadedFilePath) {
-            await supabase.storage.from('product-files').remove([uploadedFilePath]);
+          await supabase.storage.from('product-files').remove([uploadedFilePath]);
         }
         throw insertError;
       }
@@ -128,8 +140,8 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
         description: error.message || 'Ocorreu um erro inesperado.',
         variant: 'destructive',
       });
-      // Se houve um erro após o upload bem-sucedido mas antes da inserção no DB (ou durante a inserção),
-      // e o arquivo foi enviado, tentar removê-lo do storage
+      
+      // Cleanup on error
       if (uploadedFilePath) {
         await supabase.storage.from('product-files').remove([uploadedFilePath]);
       }

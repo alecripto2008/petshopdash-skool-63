@@ -14,7 +14,7 @@ type ToasterToast = {
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
-  variant?: "default" | "destructive"  // Fixed property name
+  variant?: "default" | "destructive"  // Correct property name is "variant", not "variants"
 }
 
 const actionTypes = {
@@ -151,7 +151,7 @@ function toast({ ...props }: Toast) {
     toast: {
       ...props,
       id,
-      variant: props.variant || "default", // Fixed property name
+      variant: props.variant || "default", // Using the correct property name
     },
   })
 

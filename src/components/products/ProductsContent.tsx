@@ -1,14 +1,14 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, RefreshCw } from 'lucide-react'; // Removido Download, pois não será mais usado
+import { Plus, Search, RefreshCw } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import AddProductDialog from './AddProductDialog';
 
-// Define a interface Product para corresponder à nova estrutura de dados (sem file_url)
 interface Product {
   id: number;
   titulo: string;
@@ -23,21 +23,30 @@ const ProductsContent = () => {
   const { data: products, isLoading, refetch, isRefetching } = useQuery<Product[], Error>({
     queryKey: ['products'],
     queryFn: async () => {
-      // Ajustar o select para buscar apenas id, titulo, created_at
-      const { data, error } = await supabase
-        .from('products')
-        .select('id, titulo, created_at') // REMOVIDO file_url da consulta
-        .order('created_at', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('id, titulo, created_at')
+          .order('created_at', { ascending: false });
 
-      if (error) {
+        if (error) {
+          toast({
+            title: 'Erro ao carregar produtos',
+            description: error.message,
+            variant: 'destructive',
+          });
+          throw error;
+        }
+        return data || [];
+      } catch (error: any) {
+        console.error("Erro ao buscar produtos:", error);
         toast({
           title: 'Erro ao carregar produtos',
-          description: error.message,
+          description: error?.message || 'Ocorreu um erro ao buscar os produtos',
           variant: 'destructive',
         });
-        throw error;
+        return [];
       }
-      return data || [];
     },
   });
 
@@ -92,7 +101,6 @@ const ProductsContent = () => {
         <TableHeader>
           <TableRow>
             <TableHead>Título (Categoria)</TableHead>
-            {/* <TableHead>Arquivo</TableHead> REMOVIDA COLUNA ARQUIVO */}
             <TableHead>Data de Criação</TableHead>
           </TableRow>
         </TableHeader>
@@ -101,23 +109,6 @@ const ProductsContent = () => {
             filteredProducts.map((product) => (
               <TableRow key={product.id}>
                 <TableCell>{product.titulo || 'Sem título'}</TableCell>
-                {/* REMOVIDA CÉLULA DE ARQUIVO 
-                <TableCell>
-                  {product.file_url ? (
-                    <a 
-                      href={product.file_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline flex items-center"
-                    >
-                      <Download className="h-4 w-4 mr-1" />
-                      Baixar/Ver Arquivo
-                    </a>
-                  ) : (
-                    'Nenhum arquivo'
-                  )}
-                </TableCell> 
-                */}
                 <TableCell>
                   {product.created_at 
                     ? new Date(product.created_at).toLocaleDateString('pt-BR')
@@ -128,7 +119,6 @@ const ProductsContent = () => {
             ))
           ) : (
             <TableRow>
-              {/* Ajustado colSpan para 2, já que uma coluna foi removida */}
               <TableCell colSpan={2} className="text-center">
                 Nenhum produto encontrado.
               </TableCell>
@@ -147,4 +137,3 @@ const ProductsContent = () => {
 };
 
 export default ProductsContent;
-
