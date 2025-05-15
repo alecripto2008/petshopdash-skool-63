@@ -3,7 +3,7 @@ import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
-import { banknote } from 'lucide-react';
+import { Banknote } from 'lucide-react';
 
 interface ServiceTypesChartProps {
   data: Array<{
@@ -21,7 +21,7 @@ const ServiceTypesChart = ({ data, loading = false }: ServiceTypesChartProps) =>
       <Card className="col-span-1">
         <CardHeader className="pb-2">
           <CardTitle className="text-md flex items-center gap-2">
-            <banknote className="h-5 w-5 text-green-600 dark:text-green-400" />
+            <Banknote className="h-5 w-5 text-green-600 dark:text-green-400" />
             Tipos de Serviço
           </CardTitle>
         </CardHeader>
@@ -56,7 +56,7 @@ const ServiceTypesChart = ({ data, loading = false }: ServiceTypesChartProps) =>
     <Card className="col-span-1">
       <CardHeader className="pb-2">
         <CardTitle className="text-md flex items-center gap-2">
-          <banknote className="h-5 w-5 text-green-600 dark:text-green-400" />
+          <Banknote className="h-5 w-5 text-green-600 dark:text-green-400" />
           Tipos de Serviço
         </CardTitle>
       </CardHeader>

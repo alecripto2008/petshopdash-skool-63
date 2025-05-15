@@ -48,6 +48,8 @@ export function useClientStats() {
       const currentYear = new Date().getFullYear();
       const monthlyGrowthData = [];
       
+      const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+      
       for (let month = 0; month < 12; month++) {
         const startOfMonth = new Date(currentYear, month, 1);
         const endOfMonth = new Date(currentYear, month + 1, 0);
@@ -58,7 +60,6 @@ export function useClientStats() {
           .gte('created_at', startOfMonth.toISOString())
           .lte('created_at', endOfMonth.toISOString());
         
-        const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
         monthlyGrowthData.push({
           month: monthNames[month],
           clients: count || 0
