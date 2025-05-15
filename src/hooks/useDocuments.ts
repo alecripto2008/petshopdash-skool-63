@@ -176,9 +176,9 @@ export const useDocuments = () => {
     }
   };
 
-  // Format proper content and metadata
+  // Format proper content and metadata with correct structure
   const formatContentAndMetadata = (text: string, file: File, category: string) => {
-    // Prepare the proper metadata format
+    // Prepare the proper metadata format with the exact structure requested
     const metadata = {
       loc: {
         lines: {
@@ -267,8 +267,10 @@ export const useDocuments = () => {
       
       console.log('Conteúdo extraído e sanitizado, tamanho:', sanitizedContent.length);
       
-      // Format content and metadata properly
+      // Format content and metadata properly with the exact required structure
       const { content, metadata } = formatContentAndMetadata(sanitizedContent, file, category);
+      
+      console.log('Metadata formatado:', metadata);
       
       // Prepare insertion data
       const insertData = {

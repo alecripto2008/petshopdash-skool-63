@@ -124,9 +124,9 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
     });
   };
 
-  // Format proper content and metadata
+  // Format proper content and metadata with correct structure
   const formatContentAndMetadata = (text: string, file: File, category: string) => {
-    // Prepare the proper metadata format
+    // Prepare the proper metadata format with the exact structure requested
     const metadata = {
       loc: {
         lines: {
@@ -149,18 +149,49 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
     };
   };
 
+  // Function to check and create bucket if it doesn't exist
+  const ensureBucketExists = async (): Promise<boolean> => {
+    try {
+      // Check if the bucket exists
+      const { data: buckets, error: checkError } = await supabase.storage.listBuckets();
+      
+      if (checkError) {
+        console.error("Error checking buckets:", checkError);
+        throw new Error(`Erro ao verificar buckets: ${checkError.message}`);
+      }
+      
+      const bucketExists = buckets?.some(b => b.name === 'product-files');
+      
+      if (!bucketExists) {
+        console.log('Bucket não encontrado, tentando criar...');
+        
+        const { error: createError } = await supabase.storage.createBucket('product-files', {
+          public: true,
+          fileSizeLimit: 52428800 // 50MB
+        });
+        
+        if (createError) {
+          console.error("Error creating bucket:", createError);
+          throw new Error(`Erro ao criar bucket: ${createError.message}`);
+        }
+        
+        console.log('Bucket criado com sucesso');
+      }
+      
+      return true;
+    } catch (error: any) {
+      console.error("Error ensuring bucket exists:", error);
+      return false;
+    }
+  };
+
   // Function to handle file upload with proper error handling
   const uploadFile = async (file: File, category: string): Promise<string> => {
-    // First check if the bucket exists
-    const { data: buckets } = await supabase.storage.listBuckets();
-    const bucketExists = buckets?.some(b => b.name === 'product-files');
+    // First ensure the bucket exists
+    const bucketExists = await ensureBucketExists();
     
     if (!bucketExists) {
-      console.log('Bucket não encontrado, tentando criar...');
-      await supabase.storage.createBucket('product-files', {
-        public: true,
-        fileSizeLimit: 52428800 // 50MB
-      });
+      throw new Error("Não foi possível criar ou verificar o bucket de armazenamento");
     }
     
     const sanitizedFileName = sanitizeFileName(`${uuidv4()}-${file.name}`);
@@ -198,8 +229,10 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
       
       console.log('Conteúdo extraído e sanitizado, tamanho:', sanitizedContent.length);
       
-      // Format content and metadata properly
+      // Format content and metadata properly with the exact required structure
       const { content, metadata } = formatContentAndMetadata(sanitizedContent, selectedFile, values.category);
+      
+      console.log('Metadata formatado:', metadata);
       
       // Try to upload file
       try {
