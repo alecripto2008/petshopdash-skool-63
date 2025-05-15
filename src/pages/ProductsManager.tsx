@@ -4,16 +4,20 @@ import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import ProductsHeader from '@/components/products/ProductsHeader';
 import ProductsContent from '@/components/products/ProductsContent';
+import { useProducts } from '@/hooks/useProducts';
 
 const ProductsManager = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
+  const { isLoading: productsLoading } = useProducts();
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    if (!isLoading && !user) {
+    if (!authLoading && !user) {
       navigate('/');
     }
-  }, [user, isLoading, navigate]);
+  }, [user, authLoading, navigate]);
+
+  const isLoading = authLoading || productsLoading;
 
   if (isLoading) {
     return (
@@ -27,6 +31,11 @@ const ProductsManager = () => {
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
       <ProductsHeader />
       <main className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+            Gerenciador de Produtos
+          </h2>
+        </div>
         <ProductsContent />
       </main>
     </div>
