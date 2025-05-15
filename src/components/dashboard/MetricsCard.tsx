@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { LineChart } from 'lucide-react';
+import { LineChart, CreditCard, DollarSign } from 'lucide-react';
 
 const MetricsCard = () => {
   const navigate = useNavigate();
@@ -23,16 +24,19 @@ const MetricsCard = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
-        <div className="mb-4 flex justify-center">
-          <div className="bg-blue-100 dark:bg-blue-900/30 p-6 rounded-full relative">
-            <LineChart className="h-14 w-14 text-blue-500 dark:text-blue-400" />
-            <div className="absolute -top-2 -right-2 bg-purple-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center animate-pulse">
-              110
-            </div>
+        <div className="mb-4 flex justify-center gap-4">
+          <div className="bg-blue-100 dark:bg-blue-900/30 p-4 rounded-full relative">
+            <LineChart className="h-10 w-10 text-blue-500 dark:text-blue-400" />
+          </div>
+          <div className="bg-green-100 dark:bg-green-900/30 p-4 rounded-full relative">
+            <DollarSign className="h-10 w-10 text-green-500 dark:text-green-400" />
+          </div>
+          <div className="bg-purple-100 dark:bg-purple-900/30 p-4 rounded-full relative">
+            <CreditCard className="h-10 w-10 text-purple-500 dark:text-purple-400" />
           </div>
         </div>
         <p className="text-gray-600 dark:text-gray-300 text-center">
-          Gerencie e analise os indicadores em tempo real
+          Gerencie estatísticas de clientes, pagamentos e serviços
         </p>
       </CardContent>
       <CardFooter className="bg-gray-50 dark:bg-gray-700/50 rounded-b-lg border-t dark:border-gray-700 flex justify-center py-3">

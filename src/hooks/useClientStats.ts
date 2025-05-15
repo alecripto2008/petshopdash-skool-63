@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,7 +10,10 @@ export function useClientStats() {
     newClientsThisMonth: 0,
     monthlyGrowth: [],
     petBreeds: [],
-    recentClients: []
+    recentClients: [],
+    paymentMethods: [],
+    serviceTypes: [],
+    monthlyPayments: []
   });
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -101,6 +105,73 @@ export function useClientStats() {
         lastVisit: new Date(client.created_at).toLocaleDateString('pt-BR')
       })) || [];
 
+      // Fetch payment methods data
+      const { data: paymentMethodsData } = await supabase
+        .from('payments')
+        .select('type, value');
+
+      const paymentMethodCounts = {};
+      const paymentMethodValues = {};
+      
+      paymentMethodsData?.forEach(payment => {
+        if (payment.type) {
+          const type = payment.type.trim();
+          paymentMethodCounts[type] = (paymentMethodCounts[type] || 0) + 1;
+          paymentMethodValues[type] = (paymentMethodValues[type] || 0) + Number(payment.value || 0);
+        }
+      });
+
+      const paymentMethods = Object.entries(paymentMethodCounts).map(([name, count], index) => ({
+        name,
+        count,
+        value: paymentMethodValues[name] || 0,
+        color: colors[index % colors.length]
+      }));
+
+      // Fetch service types data
+      const { data: serviceTypesData } = await supabase
+        .from('payments')
+        .select('typeservice, value');
+
+      const serviceTypeCounts = {};
+      const serviceTypeValues = {};
+      
+      serviceTypesData?.forEach(payment => {
+        if (payment.typeservice) {
+          const type = payment.typeservice.trim();
+          serviceTypeCounts[type] = (serviceTypeCounts[type] || 0) + 1;
+          serviceTypeValues[type] = (serviceTypeValues[type] || 0) + Number(payment.value || 0);
+        }
+      });
+
+      const serviceTypes = Object.entries(serviceTypeCounts).map(([name, count], index) => ({
+        name,
+        count,
+        value: serviceTypeValues[name] || 0,
+        color: colors[(index + 3) % colors.length]
+      }));
+
+      // Fetch monthly payments data
+      const monthlyPaymentsData = [];
+      
+      for (let month = 0; month < 12; month++) {
+        const startOfMonth = new Date(currentYear, month, 1);
+        const endOfMonth = new Date(currentYear, month + 1, 0);
+        
+        const { data: monthPayments } = await supabase
+          .from('payments')
+          .select('value')
+          .gte('created_at', startOfMonth.toISOString())
+          .lte('created_at', endOfMonth.toISOString());
+        
+        const monthlyTotal = monthPayments?.reduce((sum, payment) => sum + Number(payment.value || 0), 0) || 0;
+        
+        monthlyPaymentsData.push({
+          month: monthNames[month],
+          total: monthlyTotal
+        });
+      }
+
       // Update stats
       setStats({
         totalClients: totalClients || 0,
@@ -108,7 +179,10 @@ export function useClientStats() {
         newClientsThisMonth: newClientsThisMonth || 0,
         monthlyGrowth: monthlyGrowthData,
         petBreeds,
-        recentClients
+        recentClients,
+        paymentMethods,
+        serviceTypes,
+        monthlyPayments: monthlyPaymentsData
       });
 
     } catch (error) {

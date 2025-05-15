@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { LineChart, Users, Smartphone, PawPrint } from 'lucide-react';
+import { LineChart, Users, Smartphone, PawPrint, CreditCard, DollarSign } from 'lucide-react';
 import { useClientStats } from '@/hooks/useClientStats';
 import { useDashboardRealtime } from '@/hooks/useDashboardRealtime';
 
@@ -11,6 +11,9 @@ import ClientGrowthChart from '@/components/metrics/ClientGrowthChart';
 import PetTypesChart from '@/components/metrics/PetTypesChart';
 import ServicesBarChart from '@/components/metrics/ServicesBarChart';
 import RecentClientsTable from '@/components/metrics/RecentClientsTable';
+import PaymentMethodsChart from '@/components/metrics/PaymentMethodsChart';
+import ServiceTypesChart from '@/components/metrics/ServiceTypesChart';
+import MonthlyPaymentsChart from '@/components/metrics/MonthlyPaymentsChart';
 
 const MetricsDashboard = () => {
   const { stats, loading, refetchStats } = useClientStats();
@@ -48,6 +51,38 @@ const MetricsDashboard = () => {
         { name: 'Não especificado', value: 100, color: '#8B5CF6' }
       ];
 
+  // Use payment methods data from the API
+  const paymentMethodsData = stats.paymentMethods?.length > 0
+    ? stats.paymentMethods
+    : [
+        { name: 'Não especificado', count: 0, value: 0, color: '#3B82F6' }
+      ];
+
+  // Use service types data from the API
+  const serviceTypesData = stats.serviceTypes?.length > 0
+    ? stats.serviceTypes
+    : [
+        { name: 'Não especificado', count: 0, value: 0, color: '#10B981' }
+      ];
+
+  // Use monthly payments data from the API
+  const monthlyPaymentsData = stats.monthlyPayments?.length > 0
+    ? stats.monthlyPayments
+    : [
+        { month: 'Jan', total: 0 },
+        { month: 'Fev', total: 0 },
+        { month: 'Mar', total: 0 },
+        { month: 'Abr', total: 0 },
+        { month: 'Mai', total: 0 },
+        { month: 'Jun', total: 0 },
+        { month: 'Jul', total: 0 },
+        { month: 'Ago', total: 0 },
+        { month: 'Set', total: 0 },
+        { month: 'Out', total: 0 },
+        { month: 'Nov', total: 0 },
+        { month: 'Dez', total: 0 }
+      ];
+
   const petServicesData = [
     { name: 'Banho', value: 45 },
     { name: 'Tosa', value: 35 },
@@ -62,6 +97,10 @@ const MetricsDashboard = () => {
     : [
         { id: 1, name: 'Carregando...', phone: '...', pets: 0, lastVisit: '...' }
       ];
+
+  // Calculate total revenue for the current month
+  const currentMonth = new Date().getMonth();
+  const currentMonthRevenue = stats.monthlyPayments?.[currentMonth]?.total || 0;
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
@@ -100,24 +139,29 @@ const MetricsDashboard = () => {
           />
           
           <StatCard 
-            title="Novos Clientes (Mês)"
-            value={stats.newClientsThisMonth}
-            icon={<Smartphone />}
-            trend={`+${stats.newClientsThisMonth} comparado ao mês anterior`}
+            title="Faturamento (Mês Atual)"
+            value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentMonthRevenue)}
+            icon={<DollarSign />}
+            trend={`${stats.paymentMethods.length} métodos de pagamento`}
             loading={loading}
-            iconBgClass="bg-blue-100 dark:bg-blue-900/30"
-            iconTextClass="text-blue-600 dark:text-blue-400"
+            iconBgClass="bg-green-100 dark:bg-green-900/30"
+            iconTextClass="text-green-600 dark:text-green-400"
           />
         </div>
         
         {/* Gráficos e Tabelas */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <ClientGrowthChart data={monthlyCustomersData} loading={loading} />
-          <PetTypesChart data={petBreedsData} loading={loading} />
+          <MonthlyPaymentsChart data={monthlyPaymentsData} loading={loading} />
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <PaymentMethodsChart data={paymentMethodsData} loading={loading} />
+          <ServiceTypesChart data={serviceTypesData} loading={loading} />
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ServicesBarChart data={petServicesData} />
+          <PetTypesChart data={petBreedsData} loading={loading} />
           <RecentClientsTable clients={recentClientsData} loading={loading} />
         </div>
       </main>
