@@ -19,6 +19,12 @@ interface ClientsTableProps {
   onContactClick: (contact: Contact) => void;
 }
 
+// Define a type for the monthGroup object structure
+interface MonthGroup {
+  label: string;
+  contacts: Contact[];
+}
+
 const ClientsTable = ({ 
   contacts, 
   isLoading, 
@@ -39,7 +45,7 @@ const ClientsTable = ({
 
   // Agrupar contatos por mês
   const contactsByMonth = useMemo(() => {
-    const groupedContacts = {};
+    const groupedContacts: Record<string, MonthGroup> = {};
     
     filteredContacts.forEach(contact => {
       if (!contact.lastContact) return;
@@ -66,10 +72,10 @@ const ClientsTable = ({
     // Ordenar os meses em ordem decrescente (mais recentes primeiro)
     return Object.entries(groupedContacts)
       .sort(([keyA], [keyB]) => keyB.localeCompare(keyA))
-      .map(([key, value]) => value);
+      .map(([_, value]) => value);
   }, [filteredContacts]);
 
-  function getMonthName(monthNumber) {
+  function getMonthName(monthNumber: number): string {
     const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     return monthNames[monthNumber - 1];
   }
@@ -90,7 +96,7 @@ const ClientsTable = ({
         </div>
       ) : (
         <>
-          {contactsByMonth.map((monthGroup, monthIndex) => (
+          {contactsByMonth.map((monthGroup: MonthGroup, monthIndex) => (
             <div key={monthIndex} className="mb-8">
               <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-t-lg font-medium">
                 {monthGroup.label} - {monthGroup.contacts.length} cliente(s)
