@@ -176,99 +176,50 @@ export const useDocuments = () => {
     }
   };
 
+  // Format proper content and metadata
+  const formatContentAndMetadata = (text: string, file: File, category: string) => {
+    // Prepare the proper metadata format
+    const metadata = {
+      loc: {
+        lines: {
+          from: 30,
+          to: 38
+        }
+      },
+      source: "blob",
+      blobType: file.type || "text/plain",
+      category: category,
+      fileName: file.name,
+      size: `${(file.size / 1024).toFixed(0)} KB`,
+      type: file.type || "unknown",
+      uploadDate: new Date().toISOString()
+    };
+
+    return { 
+      content: text || `Conteúdo do arquivo: ${file.name}`,
+      metadata
+    };
+  };
+
   // Sanitize text to remove problematic characters
   const sanitizeTextContent = (text: string): string => {
     if (!text) return '';
     
-    // Remove null bytes, control characters and other problematic Unicode sequences
-    return text
-      .replace(/\0/g, '') // Remove null bytes
-      .replace(/\\u0000/g, '') // Remove escaped null bytes
-      .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
-      .replace(/\\u[0-9a-fA-F]{4}/g, '') // Remove Unicode escape sequences
-      .replace(/[^\x20-\x7E\xA0-\xFF\u0100-\uFFFF]/g, ' '); // Replace other non-standard chars with spaces
-  };
-
-  // Upload file to Supabase
-  const uploadFileToWebhook = async (file: File, category: string) => {
     try {
-      console.log('Enviando arquivo:', file.name, 'categoria:', category);
-      
-      // Create a simplified file reader to extract text content
-      const fileContent = await readFileAsText(file);
-      const sanitizedContent = fileContent ? sanitizeTextContent(fileContent) : 'Sem conteúdo extraído';
-      
-      console.log('Conteúdo extraído e sanitizado, tamanho:', sanitizedContent.length);
-      
-      // Prepare metadata - ensure it's a plain object with no special characters
-      const metadata = {
-        category: category,
-        fileName: file.name,
-        type: file.type,
-        size: `${(file.size / 1024).toFixed(0)} KB`,
-        uploadDate: new Date().toISOString()
-      };
-      
-      console.log('Metadata preparado:', metadata);
-      
-      // Insertion payload
-      const insertData = {
-        titulo: file.name,
-        content: sanitizedContent.substring(0, 10000), // Limit content length
-        metadata: metadata
-      };
-      
-      console.log('Enviando para o Supabase, tamanho do conteúdo:', insertData.content.length);
-      
-      // Insert document into Supabase
-      const { data, error } = await supabase
-        .from('documents')
-        .insert(insertData)
-        .select();
-        
-      if (error) {
-        console.error('Erro ao salvar documento:', error);
-        toast({
-          title: "Erro ao salvar documento",
-          description: "Não foi possível salvar o documento no banco de dados: " + error.message,
-          variant: "destructive",
-        });
-        return false;
-      }
-      
-      console.log('Documento salvo com sucesso:', data);
-      
-      // Update the documents list with the new document
-      if (data && data.length > 0) {
-        const newDoc: Document = {
-          id: data[0].id,
-          name: file.name,
-          type: file.type,
-          size: `${(file.size / 1024).toFixed(0)} KB`,
-          category: category,
-          uploadedAt: new Date().toLocaleDateString('pt-BR'),
-          titulo: file.name,
-          metadata: metadata
-        };
-        
-        setDocuments(prev => [newDoc, ...prev]);
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Erro ao enviar o arquivo:', error);
-      
-      toast({
-        title: "Erro ao enviar documento",
-        description: "Não foi possível enviar o documento para o sistema de conhecimento.",
-        variant: "destructive",
-      });
-      
-      return false;
+      // Remove null bytes, control characters and other problematic Unicode sequences
+      return text
+        .replace(/\0/g, '') // Remove null bytes
+        .replace(/\\u0000/g, '') // Remove escaped null bytes
+        .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
+        .replace(/\\u[0-9a-fA-F]{4}/g, '') // Remove Unicode escape sequences
+        .replace(/[^\x20-\x7E\xA0-\xFF\u0100-\uFFFF]/g, ' '); // Replace other non-standard chars with spaces
+    } catch (e) {
+      console.error('Error sanitizing content:', e);
+      return `Erro ao processar o conteúdo`;
     }
   };
-  
-  // Helper function to read file content with better error handling
+
+  // Read file as text with better error handling
   const readFileAsText = async (file: File): Promise<string | null> => {
     return new Promise((resolve, reject) => {
       try {
@@ -303,6 +254,78 @@ export const useDocuments = () => {
         resolve(`Nome do arquivo: ${file.name}`);
       }
     });
+  };
+
+  // Upload file to Supabase
+  const uploadFileToWebhook = async (file: File, category: string) => {
+    try {
+      console.log('Enviando arquivo:', file.name, 'categoria:', category);
+      
+      // Extract text content from the file
+      const fileContent = await readFileAsText(file);
+      const sanitizedContent = fileContent ? sanitizeTextContent(fileContent) : 'Sem conteúdo extraído';
+      
+      console.log('Conteúdo extraído e sanitizado, tamanho:', sanitizedContent.length);
+      
+      // Format content and metadata properly
+      const { content, metadata } = formatContentAndMetadata(sanitizedContent, file, category);
+      
+      // Prepare insertion data
+      const insertData = {
+        titulo: category || file.name, // Use category as the title
+        content: content,
+        metadata: metadata
+      };
+      
+      console.log('Enviando para o Supabase:', insertData);
+      
+      // Insert document into Supabase
+      const { data, error } = await supabase
+        .from('documents')
+        .insert(insertData)
+        .select();
+        
+      if (error) {
+        console.error('Erro ao salvar documento:', error);
+        toast({
+          title: "Erro ao salvar documento",
+          description: "Não foi possível salvar o documento no banco de dados: " + error.message,
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      console.log('Documento salvo com sucesso:', data);
+      
+      // Update the documents list with the new document
+      if (data && data.length > 0) {
+        // Create a new document with the correct metadata format
+        const newDoc: Document = {
+          id: data[0].id,
+          name: category || file.name,
+          type: file.type || "unknown",
+          size: `${(file.size / 1024).toFixed(0)} KB`,
+          category: category || "Sem categoria",
+          uploadedAt: new Date().toLocaleDateString('pt-BR'),
+          titulo: category || file.name,
+          metadata: metadata
+        };
+        
+        setDocuments(prev => [newDoc, ...prev]);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Erro ao enviar o arquivo:', error);
+      
+      toast({
+        title: "Erro ao enviar documento",
+        description: "Não foi possível enviar o documento para o sistema de conhecimento.",
+        variant: "destructive",
+      });
+      
+      return false;
+    }
   };
 
   // Load documents on hook initialization

@@ -77,6 +77,7 @@ const AddDocumentDialog: React.FC<AddDocumentDialogProps> = ({
       setIsUploading(true);
       try {
         await onAddDocument(selectedFile, values.category);
+        onOpenChange(false); // Close the dialog on success
       } catch (error) {
         console.error('Erro durante upload:', error);
       } finally {
@@ -134,7 +135,7 @@ const AddDocumentDialog: React.FC<AddDocumentDialogProps> = ({
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Categoria</FormLabel>
+                    <FormLabel>Categoria (Título)</FormLabel>
                     <FormControl>
                       <Input 
                         {...field} 

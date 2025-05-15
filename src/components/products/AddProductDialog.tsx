@@ -124,10 +124,47 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
     });
   };
 
+  // Format proper content and metadata
+  const formatContentAndMetadata = (text: string, file: File, category: string) => {
+    // Prepare the proper metadata format
+    const metadata = {
+      loc: {
+        lines: {
+          from: 30,
+          to: 38
+        }
+      },
+      source: "blob",
+      blobType: file.type || "text/plain",
+      category: category,
+      fileName: file.name,
+      size: `${(file.size / 1024).toFixed(0)} KB`,
+      type: file.type || "unknown",
+      uploadDate: new Date().toISOString()
+    };
+
+    return { 
+      content: text || `Conteúdo do arquivo: ${file.name}`,
+      metadata
+    };
+  };
+
   // Function to handle file upload with proper error handling
   const uploadFile = async (file: File, category: string): Promise<string> => {
+    // First check if the bucket exists
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const bucketExists = buckets?.some(b => b.name === 'product-files');
+    
+    if (!bucketExists) {
+      console.log('Bucket não encontrado, tentando criar...');
+      await supabase.storage.createBucket('product-files', {
+        public: true,
+        fileSizeLimit: 52428800 // 50MB
+      });
+    }
+    
     const sanitizedFileName = sanitizeFileName(`${uuidv4()}-${file.name}`);
-    const filePath = `product-files/${sanitizedFileName}`;
+    const filePath = `${sanitizedFileName}`;
     
     const { error: uploadError } = await supabase.storage
       .from('product-files') 
@@ -161,22 +198,25 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
       
       console.log('Conteúdo extraído e sanitizado, tamanho:', sanitizedContent.length);
       
-      // Upload file with sanitized file name
-      uploadedFilePath = await uploadFile(selectedFile, values.category);
+      // Format content and metadata properly
+      const { content, metadata } = formatContentAndMetadata(sanitizedContent, selectedFile, values.category);
       
-      // Prepare metadata - ensure it's a plain object with no special characters
-      const metadata = {
-        category: values.category,
-        fileName: selectedFile.name,
-        type: selectedFile.type,
-        size: `${(selectedFile.size / 1024).toFixed(0)} KB`,
-        uploadDate: new Date().toISOString()
-      };
-
+      // Try to upload file
+      try {
+        uploadedFilePath = await uploadFile(selectedFile, values.category);
+      } catch (error: any) {
+        console.error("Upload error:", error);
+        toast({
+          title: 'Erro ao fazer upload do arquivo',
+          description: error.message || 'Verifique se o bucket existe no Supabase',
+          variant: 'destructive',
+        });
+      }
+      
       // Save product metadata to database with sanitized content
       const { error: insertError } = await supabase.from('products').insert({
         titulo: values.category,
-        content: sanitizedContent.substring(0, 10000), // Limit content length
+        content: content,
         metadata: metadata
       });
 
