@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend, Tooltip, Cell } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Banknote } from 'lucide-react';
@@ -43,11 +43,8 @@ const ServiceTypesChart = ({ data, loading = false }: ServiceTypesChartProps) =>
     return acc;
   }, {});
 
-  // Format data for the pie chart
-  const chartData = data.map(item => ({
-    name: item.name,
-    value: item.count
-  }));
+  // Format data for the bar chart - sort by count for better visualization
+  const chartData = [...data].sort((a, b) => a.count - b.count);
 
   // Calculate total value for all service types
   const totalValue = data.reduce((sum, item) => sum + item.value, 0);
@@ -64,23 +61,35 @@ const ServiceTypesChart = ({ data, loading = false }: ServiceTypesChartProps) =>
         <div className="h-[300px] w-full">
           <ChartContainer config={config}>
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={data[index]?.color} />
-                  ))}
-                </Pie>
-                <Legend />
+              <BarChart
+                layout="vertical"
+                data={chartData}
+                margin={{
+                  top: 5,
+                  right: 30,
+                  left: 20,
+                  bottom: 5,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" />
+                <YAxis 
+                  type="category" 
+                  dataKey="name" 
+                  width={100}
+                  tickFormatter={(value) => {
+                    // Limita o tamanho do texto para caber na visualização
+                    return value.length > 12 ? value.substring(0, 12) + '...' : value;
+                  }}
+                />
                 <Tooltip content={<ChartTooltipContent />} />
-              </PieChart>
+                <Legend />
+                <Bar dataKey="count" name="Quantidade">
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
           <div className="mt-2 text-sm text-center text-gray-500 dark:text-gray-400">
