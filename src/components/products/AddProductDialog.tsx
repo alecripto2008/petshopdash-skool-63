@@ -8,11 +8,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { FileUp, Upload, Loader2, FileText } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { v4 as uuidv4 } from 'uuid';
-import { FileService } from '@/services/FileService';
+import { useProducts } from '@/hooks/useProducts';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_FILE_TYPES = [
@@ -49,7 +47,7 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const fileService = new FileService();
+  const { uploadFileToWebhook } = useProducts();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -70,66 +68,6 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
     }
   };
 
-  // Function to check and create bucket if it doesn't exist
-  const ensureBucketExists = async (): Promise<boolean> => {
-    try {
-      // Check if the bucket exists
-      const { data: buckets, error: checkError } = await supabase.storage.listBuckets();
-      
-      if (checkError) {
-        console.error("Error checking buckets:", checkError);
-        throw new Error(`Erro ao verificar buckets: ${checkError.message}`);
-      }
-      
-      const bucketExists = buckets?.some(b => b.name === 'product-files');
-      
-      if (!bucketExists) {
-        console.log('Bucket não encontrado, tentando criar...');
-        
-        const { error: createError } = await supabase.storage.createBucket('product-files', {
-          public: true,
-          fileSizeLimit: 52428800 // 50MB
-        });
-        
-        if (createError) {
-          console.error("Error creating bucket:", createError);
-          throw new Error(`Erro ao criar bucket: ${createError.message}`);
-        }
-        
-        console.log('Bucket criado com sucesso');
-      }
-      
-      return true;
-    } catch (error: any) {
-      console.error("Error ensuring bucket exists:", error);
-      return false;
-    }
-  };
-
-  // Function to handle file upload with proper error handling
-  const uploadFile = async (file: File, category: string): Promise<string> => {
-    // First ensure the bucket exists
-    const bucketExists = await ensureBucketExists();
-    
-    if (!bucketExists) {
-      throw new Error("Não foi possível criar ou verificar o bucket de armazenamento");
-    }
-    
-    const sanitizedFileName = fileService.sanitizeFileName(`${uuidv4()}-${file.name}`);
-    const filePath = `${sanitizedFileName}`;
-    
-    const { error: uploadError } = await supabase.storage
-      .from('product-files') 
-      .upload(filePath, file);
-
-    if (uploadError) {
-      console.error("File upload error:", uploadError);
-      throw new Error(`Erro ao fazer upload: ${uploadError.message}`);
-    }
-
-    return filePath;
-  };
-
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!selectedFile) {
       toast({
@@ -141,64 +79,27 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
     }
 
     setIsUploading(true);
-    let uploadedFilePath: string | null = null;
     
     try {
-      // Extract text content from file
-      const fileContent = await fileService.extractTextFromFile(selectedFile);
-      console.log('Conteúdo extraído do arquivo, tamanho:', fileContent.length);
+      // Use the webhook to upload the file
+      const success = await uploadFileToWebhook(selectedFile, values.category);
       
-      // Sanitize the content
-      const sanitizedContent = fileService.sanitizeTextContent(fileContent);
-      console.log('Conteúdo sanitizado, tamanho:', sanitizedContent.length);
-      
-      // Format content and metadata with proper structure
-      const { content, metadata } = fileService.formatContentAndMetadata(sanitizedContent, selectedFile, values.category);
-      
-      console.log('Metadata formatado:', JSON.stringify(metadata).substring(0, 200));
-      console.log('Content formatado (primeiros 100 chars):', content.substring(0, 100));
-      
-      // Try to upload file to storage
-      try {
-        uploadedFilePath = await uploadFile(selectedFile, values.category);
-        console.log('Arquivo enviado para storage com sucesso:', uploadedFilePath);
-      } catch (error: any) {
-        console.error("Upload error:", error);
+      if (success) {
         toast({
-          title: 'Erro ao fazer upload do arquivo',
-          description: error.message || 'Verifique se o bucket existe no Supabase',
-          variant: 'destructive',
+          title: 'Produto adicionado com sucesso!',
+          description: `O produto "${values.category}" foi cadastrado.`,
         });
-      }
-      
-      // Save product metadata to database with text content
-      const { error: insertError } = await supabase.from('products').insert({
-        titulo: values.category,
-        content: content, // Content as extracted text
-        metadata: metadata // Properly structured metadata
-      });
 
-      if (insertError) {
-        if (uploadedFilePath) {
-          // Clean up file if database insertion failed
-          await supabase.storage.from('product-files').remove([uploadedFilePath]);
+        form.reset();
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
         }
-        throw insertError;
+        onSuccess();
+        onOpenChange(false);
+      } else {
+        throw new Error('Falha ao fazer upload do produto.');
       }
-
-      toast({
-        title: 'Produto adicionado com sucesso!',
-        description: `O produto "${values.category}" foi cadastrado e o arquivo enviado para o armazenamento.`,
-      });
-
-      form.reset();
-      setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      onSuccess();
-      onOpenChange(false);
-
     } catch (error: any) {
       console.error('Error adding product:', error);
       toast({
@@ -206,11 +107,6 @@ const AddProductDialog = ({ open, onOpenChange, onSuccess }: AddProductDialogPro
         description: error.message || 'Ocorreu um erro inesperado.',
         variant: 'destructive',
       });
-      
-      // Cleanup on error
-      if (uploadedFilePath) {
-        await supabase.storage.from('product-files').remove([uploadedFilePath]);
-      }
     } finally {
       setIsUploading(false);
     }
