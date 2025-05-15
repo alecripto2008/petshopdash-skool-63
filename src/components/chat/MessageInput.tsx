@@ -81,4 +81,3 @@ const MessageInput = ({ selectedChat, selectedConversation }: MessageInputProps)
 };
 
 export default MessageInput;
-

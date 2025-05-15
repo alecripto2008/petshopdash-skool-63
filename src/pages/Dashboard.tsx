@@ -18,8 +18,7 @@ const Dashboard = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   
-  // Initialize real-time updates for the dashboard
-  // Chamamos o hook apenas uma vez, sem dependências que causariam re-renderização
+  // Use o hook apenas uma vez
   useDashboardRealtime();
   
   useEffect(() => {
