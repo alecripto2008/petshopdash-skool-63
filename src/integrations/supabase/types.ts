@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      chat_messages: {
+        Row: {
+          active: boolean | null
+          app: string | null
+          bot_message: string | null
+          conversation_id: string | null
+          created_at: string
+          id: number
+          message_type: string | null
+          phone: string | null
+          user_id: string | null
+          user_message: string | null
+          user_name: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          app?: string | null
+          bot_message?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: number
+          message_type?: string | null
+          phone?: string | null
+          user_id?: string | null
+          user_message?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          app?: string | null
+          bot_message?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: number
+          message_type?: string | null
+          phone?: string | null
+          user_id?: string | null
+          user_message?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       chats: {
         Row: {
           app: string | null
@@ -40,47 +82,71 @@ export type Database = {
         Row: {
           active: boolean | null
           app: string | null
+          asaas_id: string | null
+          city: string | null
           cliente_name: string | null
+          complemento: string | null
+          cpf: string | null
           created_at: string
-          distance: number | null
           email: string | null
           id: number
-          lat: number | null
+          lat: string | null
           location: string | null
-          long: number | null
-          pagamento: string | null
-          phone: number | null
+          logradouro: string | null
+          long: string | null
+          neighborhood: string | null
+          phone: string | null
+          street_number: string | null
+          uf: string | null
           updated_at: string | null
+          updatete_at: string | null
+          zip_code: string | null
         }
         Insert: {
           active?: boolean | null
           app?: string | null
+          asaas_id?: string | null
+          city?: string | null
           cliente_name?: string | null
+          complemento?: string | null
+          cpf?: string | null
           created_at?: string
-          distance?: number | null
           email?: string | null
           id?: number
-          lat?: number | null
+          lat?: string | null
           location?: string | null
-          long?: number | null
-          pagamento?: string | null
-          phone?: number | null
+          logradouro?: string | null
+          long?: string | null
+          neighborhood?: string | null
+          phone?: string | null
+          street_number?: string | null
+          uf?: string | null
           updated_at?: string | null
+          updatete_at?: string | null
+          zip_code?: string | null
         }
         Update: {
           active?: boolean | null
           app?: string | null
+          asaas_id?: string | null
+          city?: string | null
           cliente_name?: string | null
+          complemento?: string | null
+          cpf?: string | null
           created_at?: string
-          distance?: number | null
           email?: string | null
           id?: number
-          lat?: number | null
+          lat?: string | null
           location?: string | null
-          long?: number | null
-          pagamento?: string | null
-          phone?: number | null
+          logradouro?: string | null
+          long?: string | null
+          neighborhood?: string | null
+          phone?: string | null
+          street_number?: string | null
+          uf?: string | null
           updated_at?: string | null
+          updatete_at?: string | null
+          zip_code?: string | null
         }
         Relationships: []
       }
@@ -240,6 +306,87 @@ export type Database = {
         }
         Relationships: []
       }
+      professionals: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          email: string | null
+          iCalUID: string | null
+          id: number
+          name: string | null
+          phone: string | null
+          resumo: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          email?: string | null
+          iCalUID?: string | null
+          id?: number
+          name?: string | null
+          phone?: string | null
+          resumo?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          email?: string | null
+          iCalUID?: string | null
+          id?: number
+          name?: string | null
+          phone?: string | null
+          resumo?: string | null
+        }
+        Relationships: []
+      }
+      tokens: {
+        Row: {
+          cached_tokens: number | null
+          completion_tokens: number | null
+          costUSD: number | null
+          created_at: string
+          data: string | null
+          id: number
+          message_input: string | null
+          message_output: string | null
+          momentdolar: number | null
+          prompt_tokens: number | null
+          totalcost: number | null
+          totalcostReal: number | null
+          workflow: string | null
+        }
+        Insert: {
+          cached_tokens?: number | null
+          completion_tokens?: number | null
+          costUSD?: number | null
+          created_at?: string
+          data?: string | null
+          id?: number
+          message_input?: string | null
+          message_output?: string | null
+          momentdolar?: number | null
+          prompt_tokens?: number | null
+          totalcost?: number | null
+          totalcostReal?: number | null
+          workflow?: string | null
+        }
+        Update: {
+          cached_tokens?: number | null
+          completion_tokens?: number | null
+          costUSD?: number | null
+          created_at?: string
+          data?: string | null
+          id?: number
+          message_input?: string | null
+          message_output?: string | null
+          momentdolar?: number | null
+          prompt_tokens?: number | null
+          totalcost?: number | null
+          totalcostReal?: number | null
+          workflow?: string | null
+        }
+        Relationships: []
+      }
       webhook_configs: {
         Row: {
           created_at: string
@@ -329,7 +476,7 @@ export type Database = {
       }
       l2_normalize: {
         Args: { "": string } | { "": unknown } | { "": unknown }
-        Returns: string
+        Returns: unknown
       }
       match_documents: {
         Args: { query_embedding: string; match_count?: number; filter?: Json }

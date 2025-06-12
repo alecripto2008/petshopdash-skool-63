@@ -15,6 +15,7 @@ import Schedule from "./pages/Schedule";
 import NotFound from "./pages/NotFound";
 import ProductsManager from "./pages/ProductsManager";
 import PaymentsManager from "./pages/PaymentsManager";
+import UsersManager from "./pages/UsersManager";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import ConfigManager from "./pages/ConfigManager";
@@ -40,6 +41,7 @@ const App = () => (
               <Route path="/schedule" element={<Schedule />} />
               <Route path="/products" element={<ProductsManager />} />
               <Route path="/payments" element={<PaymentsManager />} />
+              <Route path="/users" element={<UsersManager />} />
               <Route path="/config" element={<ConfigManager />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

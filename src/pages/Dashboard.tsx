@@ -12,6 +12,7 @@ import EvolutionCard from '@/components/dashboard/EvolutionCard';
 import ScheduleCard from '@/components/dashboard/ScheduleCard';
 import ProductsCard from '@/components/dashboard/ProductsCard';
 import PaymentsCard from '@/components/dashboard/PaymentsCard';
+import UsersCard from '@/components/dashboard/UsersCard';
 import { ConfigCard } from '@/components/dashboard/ConfigCard';
 
 const Dashboard = () => {
@@ -53,6 +54,7 @@ const Dashboard = () => {
           <ScheduleCard />
           <ProductsCard />
           <PaymentsCard />
+          <UsersCard />
           <ConfigCard />
         </div>
       </main>
