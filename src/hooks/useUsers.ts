@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -22,25 +23,42 @@ export const useUsers = () => {
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      console.log('Fetching users...');
+      console.log('🔍 Fetching users...');
+      
+      // Buscar perfis primeiro
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          user_roles(role)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (profileError) {
-        console.error('Error fetching profiles:', profileError);
+        console.error('❌ Error fetching profiles:', profileError);
         throw profileError;
       }
 
-      console.log('Profiles fetched:', profiles);
-      return profiles.map(profile => ({
+      console.log('✅ Profiles fetched:', profiles);
+
+      // Buscar roles separadamente
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+
+      if (rolesError) {
+        console.error('❌ Error fetching roles:', rolesError);
+        // Não falhar se não conseguir buscar roles, apenas continuar sem eles
+        console.warn('⚠️ Continuing without roles data');
+      }
+
+      console.log('📋 User roles fetched:', userRoles);
+
+      // Combinar os dados
+      const usersWithRoles = profiles.map(profile => ({
         ...profile,
-        roles: profile.user_roles?.map(ur => ur.role) || []
+        roles: userRoles?.filter(ur => ur.user_id === profile.id).map(ur => ur.role) || []
       })) as UserProfile[];
+
+      console.log('👥 Final users with roles:', usersWithRoles);
+      return usersWithRoles;
     },
   });
 
@@ -49,11 +67,7 @@ export const useUsers = () => {
       try {
         console.log('🔄 Starting user creation process...', userData);
         
-        // Verificar se o usuário atual tem permissão
-        const { data: currentUser } = await supabase.auth.getUser();
-        console.log('👤 Current user:', currentUser);
-
-        // Tentar criar usuário no auth usando signUp ao invés de admin
+        // Criar usuário no auth
         console.log('📝 Creating auth user with signUp...');
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: userData.email,
@@ -123,21 +137,34 @@ export const useUsers = () => {
           }
         }
 
-        // Atribuir role
+        // Tentar atribuir role - como admin usando o usuário atual
         console.log('🔐 Assigning role:', userData.role);
-        const { error: roleError } = await supabase
+        
+        // Primeiro verificar se o usuário atual é admin
+        const { data: currentUserRoles, error: currentRolesError } = await supabase
           .from('user_roles')
-          .insert({
-            user_id: authData.user.id,
-            role: userData.role as UserRole,
-          });
+          .select('role')
+          .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
 
-        if (roleError) {
-          console.error('❌ Role assignment error:', roleError);
-          // Não vamos falhar por causa da role, apenas avisar
-          console.warn('Role assignment failed, but user was created');
+        const isCurrentUserAdmin = currentUserRoles?.some(r => r.role === 'admin');
+        
+        if (isCurrentUserAdmin) {
+          const { error: roleError } = await supabase
+            .from('user_roles')
+            .insert({
+              user_id: authData.user.id,
+              role: userData.role as UserRole,
+              assigned_by: (await supabase.auth.getUser()).data.user?.id
+            });
+
+          if (roleError) {
+            console.error('❌ Role assignment error:', roleError);
+            console.warn('⚠️ Role assignment failed, but user was created');
+          } else {
+            console.log('✅ Role assigned successfully');
+          }
         } else {
-          console.log('✅ Role assigned successfully');
+          console.warn('⚠️ Current user is not admin, skipping role assignment');
         }
 
         console.log('🎉 User creation completed successfully');
@@ -209,6 +236,7 @@ export const useUsers = () => {
         .insert({
           user_id: userId,
           role: role as UserRole,
+          assigned_by: (await supabase.auth.getUser()).data.user?.id
         });
 
       if (error) throw error;
