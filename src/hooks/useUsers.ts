@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -72,6 +73,7 @@ export const useUsers = () => {
           email: userData.email,
           password: userData.password,
           options: {
+            emailRedirectTo: `${window.location.origin}/`,
             data: {
               name: userData.name,
             }
@@ -90,7 +92,7 @@ export const useUsers = () => {
         }
 
         // Aguardar um pouco para o trigger criar o perfil
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
         // Verificar se o perfil foi criado pelo trigger
         console.log('🔍 Checking if profile was created by trigger...');
@@ -98,9 +100,14 @@ export const useUsers = () => {
           .from('profiles')
           .select('*')
           .eq('id', authData.user.id)
-          .single();
+          .maybeSingle();
 
         if (profileCheckError) {
+          console.error('❌ Error checking profile:', profileCheckError);
+          throw new Error(`Erro ao verificar perfil: ${profileCheckError.message}`);
+        }
+
+        if (!profileCheck) {
           console.log('⚠️ Profile not created by trigger, creating manually...');
           // Criar perfil manualmente se o trigger não funcionou
           const { error: profileCreateError } = await supabase
@@ -109,7 +116,8 @@ export const useUsers = () => {
               id: authData.user.id,
               name: userData.name,
               email: userData.email,
-              phone: userData.phone || null
+              phone: userData.phone || null,
+              active: true
             });
 
           if (profileCreateError) {
@@ -121,11 +129,14 @@ export const useUsers = () => {
           console.log('✅ Profile found from trigger:', profileCheck);
           
           // Atualizar perfil com telefone se necessário
-          if (userData.phone) {
+          if (userData.phone && profileCheck.phone !== userData.phone) {
             console.log('📞 Updating profile with phone...');
             const { error: profileUpdateError } = await supabase
               .from('profiles')
-              .update({ phone: userData.phone })
+              .update({ 
+                phone: userData.phone,
+                name: userData.name 
+              })
               .eq('id', authData.user.id);
 
             if (profileUpdateError) {
@@ -136,19 +147,30 @@ export const useUsers = () => {
           }
         }
 
-        // Atribuir a role solicitada
+        // Remover qualquer role existente primeiro
+        console.log('🗑️ Removing existing roles...');
+        const { error: deleteRoleError } = await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', authData.user.id);
+
+        if (deleteRoleError) {
+          console.error('❌ Error deleting existing roles:', deleteRoleError);
+          // Continuar mesmo com erro, pois pode não existir role anterior
+        }
+
+        // Atribuir a nova role
         console.log('🔐 Assigning role:', userData.role);
         
         // Obter usuário atual para atribuir assigned_by
         const { data: currentUser } = await supabase.auth.getUser();
         
-        // Atribuir a role solicitada
         const { error: roleError } = await supabase
           .from('user_roles')
           .insert({
             user_id: authData.user.id,
             role: userData.role as UserRole,
-            assigned_by: currentUser.user?.id
+            assigned_by: currentUser.user?.id || null
           });
 
         if (roleError) {
@@ -194,16 +216,24 @@ export const useUsers = () => {
 
   const updateUserMutation = useMutation({
     mutationFn: async (userData: { id: string; name: string; phone?: string; active: boolean }) => {
+      console.log('🔄 Updating user:', userData);
+      
       const { error } = await supabase
         .from('profiles')
         .update({
           name: userData.name,
-          phone: userData.phone,
+          phone: userData.phone || null,
           active: userData.active,
+          updated_at: new Date().toISOString()
         })
         .eq('id', userData.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Update error:', error);
+        throw new Error(`Erro ao atualizar usuário: ${error.message}`);
+      }
+      
+      console.log('✅ User updated successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -213,6 +243,7 @@ export const useUsers = () => {
       });
     },
     onError: (error: any) => {
+      console.error('❌ Update mutation error:', error);
       toast({
         title: "Erro",
         description: error.message || "Erro ao atualizar usuário",
@@ -226,24 +257,31 @@ export const useUsers = () => {
       console.log('🔄 Updating user role to:', role);
       
       // Remover roles existentes
-      await supabase
+      const { error: deleteError } = await supabase
         .from('user_roles')
         .delete()
         .eq('user_id', userId);
 
-      // Adicionar EXATAMENTE a nova role solicitada
+      if (deleteError) {
+        console.error('❌ Error deleting existing roles:', deleteError);
+        throw new Error(`Erro ao remover roles existentes: ${deleteError.message}`);
+      }
+
+      // Obter usuário atual
       const { data: currentUser } = await supabase.auth.getUser();
-      const { error } = await supabase
+
+      // Adicionar a nova role
+      const { error: insertError } = await supabase
         .from('user_roles')
         .insert({
           user_id: userId,
           role: role as UserRole,
-          assigned_by: currentUser.user?.id
+          assigned_by: currentUser.user?.id || null
         });
 
-      if (error) {
-        console.error('❌ Role update error:', error);
-        throw error;
+      if (insertError) {
+        console.error('❌ Role update error:', insertError);
+        throw new Error(`Erro ao atualizar permissão: ${insertError.message}`);
       }
       
       console.log('✅ Role updated successfully to:', role);
@@ -256,6 +294,7 @@ export const useUsers = () => {
       });
     },
     onError: (error: any) => {
+      console.error('❌ Role update mutation error:', error);
       toast({
         title: "Erro",
         description: error.message || "Erro ao atualizar permissão",
@@ -276,18 +315,21 @@ export const useUsers = () => {
 
       if (roleError) {
         console.error('❌ Error deleting user roles:', roleError);
-        throw new Error('Erro ao remover permissões do usuário');
+        throw new Error(`Erro ao remover permissões do usuário: ${roleError.message}`);
       }
 
-      // Depois, desativar o perfil do usuário em vez de deletar
+      // Depois, desativar o perfil do usuário
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ active: false })
+        .update({ 
+          active: false,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', userId);
 
       if (profileError) {
         console.error('❌ Error deactivating user profile:', profileError);
-        throw new Error('Erro ao desativar usuário');
+        throw new Error(`Erro ao desativar usuário: ${profileError.message}`);
       }
 
       console.log('✅ User deactivated successfully');
