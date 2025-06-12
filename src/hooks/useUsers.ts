@@ -156,7 +156,7 @@ export const useUsers = () => {
         const { data: currentUserRoles } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', currentUser.data.user?.id);
+          .eq('user_id', currentUser.user?.id);
 
         const isCurrentUserAdmin = currentUserRoles?.some(r => r.role === 'admin');
         
@@ -169,7 +169,7 @@ export const useUsers = () => {
             .insert({
               user_id: authData.user.id,
               role: userData.role as UserRole, // USAR EXATAMENTE A ROLE SOLICITADA
-              assigned_by: currentUser.data.user?.id
+              assigned_by: currentUser.user?.id
             });
 
           if (roleError) {
@@ -256,12 +256,13 @@ export const useUsers = () => {
         .eq('user_id', userId);
 
       // Adicionar EXATAMENTE a nova role solicitada
+      const { data: currentUser } = await supabase.auth.getUser();
       const { error } = await supabase
         .from('user_roles')
         .insert({
           user_id: userId,
           role: role as UserRole, // USAR EXATAMENTE A ROLE SOLICITADA
-          assigned_by: (await supabase.auth.getUser()).data.user?.id
+          assigned_by: currentUser.user?.id
         });
 
       if (error) {
