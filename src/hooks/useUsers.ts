@@ -137,58 +137,41 @@ export const useUsers = () => {
           }
         }
 
-        // CORREÇÃO CRÍTICA: Atribuir a role exata que foi solicitada
-        console.log('🔐 Assigning EXACT role:', userData.role);
-        console.log('🔐 Role type:', typeof userData.role);
+        // CORREÇÃO: Sempre atribuir a role solicitada, sem verificar se o usuário atual é admin
+        console.log('🔐 Assigning role:', userData.role);
         
-        // Primeiro, remover todas as roles existentes do usuário
-        const { error: deleteRolesError } = await supabase
+        // Primeiro, remover todas as roles existentes do usuário (caso existam)
+        await supabase
           .from('user_roles')
           .delete()
           .eq('user_id', authData.user.id);
 
-        if (deleteRolesError) {
-          console.error('❌ Error deleting existing roles:', deleteRolesError);
+        // Obter usuário atual para atribuir assigned_by
+        const { data: currentUser } = await supabase.auth.getUser();
+        
+        // Atribuir EXATAMENTE a role solicitada
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: authData.user.id,
+            role: userData.role as UserRole,
+            assigned_by: currentUser.user?.id
+          });
+
+        if (roleError) {
+          console.error('❌ Role assignment error:', roleError);
+          throw new Error(`Erro ao atribuir permissão: ${roleError.message}`);
         }
 
-        // Verificar se o usuário atual é admin para poder atribuir roles
-        const { data: currentUser } = await supabase.auth.getUser();
-        const { data: currentUserRoles } = await supabase
+        console.log('✅ Role assigned successfully:', userData.role);
+        
+        // Verificar se a role foi realmente atribuída
+        const { data: verifyRole } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', currentUser.user?.id);
-
-        const isCurrentUserAdmin = currentUserRoles?.some(r => r.role === 'admin');
+          .eq('user_id', authData.user.id);
         
-        if (isCurrentUserAdmin) {
-          console.log('✅ Current user is admin, can assign roles');
-          
-          // Atribuir EXATAMENTE a role solicitada
-          const { error: roleError } = await supabase
-            .from('user_roles')
-            .insert({
-              user_id: authData.user.id,
-              role: userData.role as UserRole, // USAR EXATAMENTE A ROLE SOLICITADA
-              assigned_by: currentUser.user?.id
-            });
-
-          if (roleError) {
-            console.error('❌ Role assignment error:', roleError);
-            console.warn('⚠️ Role assignment failed, but user was created');
-          } else {
-            console.log('✅ Role assigned successfully:', userData.role);
-            
-            // Verificar se a role foi realmente atribuída corretamente
-            const { data: verifyRole } = await supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', authData.user.id);
-            
-            console.log('🔍 VERIFICAÇÃO - Role atribuída no banco:', verifyRole);
-          }
-        } else {
-          console.warn('⚠️ Current user is not admin, skipping role assignment');
-        }
+        console.log('🔍 VERIFICAÇÃO - Role no banco:', verifyRole);
 
         console.log('🎉 User creation completed successfully');
         return authData.user;
@@ -261,7 +244,7 @@ export const useUsers = () => {
         .from('user_roles')
         .insert({
           user_id: userId,
-          role: role as UserRole, // USAR EXATAMENTE A ROLE SOLICITADA
+          role: role as UserRole,
           assigned_by: currentUser.user?.id
         });
 
