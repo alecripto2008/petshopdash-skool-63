@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -23,6 +22,7 @@ export const useUsers = () => {
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
+      console.log('Fetching users...');
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
         .select(`
@@ -31,8 +31,12 @@ export const useUsers = () => {
         `)
         .order('created_at', { ascending: false });
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Error fetching profiles:', profileError);
+        throw profileError;
+      }
 
+      console.log('Profiles fetched:', profiles);
       return profiles.map(profile => ({
         ...profile,
         roles: profile.user_roles?.map(ur => ur.role) || []
@@ -42,7 +46,10 @@ export const useUsers = () => {
 
   const addUserMutation = useMutation({
     mutationFn: async (userData: { name: string; email: string; password: string; phone?: string; role: string }) => {
+      console.log('Starting user creation process...', userData);
+      
       // Criar usuário no auth
+      console.log('Creating auth user...');
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: userData.email,
         password: userData.password,
@@ -52,20 +59,31 @@ export const useUsers = () => {
         },
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Auth error:', authError);
+        throw authError;
+      }
+
+      console.log('Auth user created:', authData.user);
 
       // Atualizar perfil
       if (userData.phone) {
+        console.log('Updating profile with phone...');
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ phone: userData.phone })
           .eq('id', authData.user.id);
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Profile update error:', profileError);
+          throw profileError;
+        }
+        console.log('Profile updated with phone');
       }
 
       // Atribuir role se não for 'user'
       if (userData.role !== 'user') {
+        console.log('Assigning role:', userData.role);
         const { error: roleError } = await supabase
           .from('user_roles')
           .insert({
@@ -73,12 +91,18 @@ export const useUsers = () => {
             role: userData.role as UserRole,
           });
 
-        if (roleError) throw roleError;
+        if (roleError) {
+          console.error('Role assignment error:', roleError);
+          throw roleError;
+        }
+        console.log('Role assigned successfully');
       }
 
+      console.log('User creation completed successfully');
       return authData.user;
     },
     onSuccess: () => {
+      console.log('Mutation successful, invalidating queries...');
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast({
         title: "Usuário criado",
@@ -86,6 +110,7 @@ export const useUsers = () => {
       });
     },
     onError: (error: any) => {
+      console.error('Mutation error:', error);
       toast({
         title: "Erro",
         description: error.message || "Erro ao criar usuário",
