@@ -14,6 +14,8 @@ export interface UserProfile {
   roles: string[];
 }
 
+type UserRole = 'admin' | 'manager' | 'user' | 'viewer';
+
 export const useUsers = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -62,13 +64,13 @@ export const useUsers = () => {
         if (profileError) throw profileError;
       }
 
-      // Atribuir role
+      // Atribuir role se não for 'user'
       if (userData.role !== 'user') {
         const { error: roleError } = await supabase
           .from('user_roles')
           .insert({
             user_id: authData.user.id,
-            role: userData.role,
+            role: userData.role as UserRole,
           });
 
         if (roleError) throw roleError;
@@ -134,7 +136,7 @@ export const useUsers = () => {
         .from('user_roles')
         .insert({
           user_id: userId,
-          role: role,
+          role: role as UserRole,
         });
 
       if (error) throw error;
