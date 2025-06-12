@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -137,19 +136,13 @@ export const useUsers = () => {
           }
         }
 
-        // CORREÇÃO: Sempre atribuir a role solicitada, sem verificar se o usuário atual é admin
+        // Atribuir a role solicitada
         console.log('🔐 Assigning role:', userData.role);
         
-        // Primeiro, remover todas as roles existentes do usuário (caso existam)
-        await supabase
-          .from('user_roles')
-          .delete()
-          .eq('user_id', authData.user.id);
-
         // Obter usuário atual para atribuir assigned_by
         const { data: currentUser } = await supabase.auth.getUser();
         
-        // Atribuir EXATAMENTE a role solicitada
+        // Atribuir a role solicitada
         const { error: roleError } = await supabase
           .from('user_roles')
           .insert({
