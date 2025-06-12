@@ -290,17 +290,41 @@ export const useUsers = () => {
 
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const { error } = await supabase.auth.admin.deleteUser(userId);
-      if (error) throw error;
+      console.log('🗑️ Deleting user:', userId);
+      
+      // Primeiro, remover todas as roles do usuário
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
+
+      if (roleError) {
+        console.error('❌ Error deleting user roles:', roleError);
+        throw new Error('Erro ao remover permissões do usuário');
+      }
+
+      // Depois, desativar o perfil do usuário em vez de deletar
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ active: false })
+        .eq('id', userId);
+
+      if (profileError) {
+        console.error('❌ Error deactivating user profile:', profileError);
+        throw new Error('Erro ao desativar usuário');
+      }
+
+      console.log('✅ User deactivated successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast({
         title: "Usuário removido",
-        description: "Usuário removido com sucesso!",
+        description: "Usuário desativado com sucesso!",
       });
     },
     onError: (error: any) => {
+      console.error('❌ Delete mutation error:', error);
       toast({
         title: "Erro",
         description: error.message || "Erro ao remover usuário",

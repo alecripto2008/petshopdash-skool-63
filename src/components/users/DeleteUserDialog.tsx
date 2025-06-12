@@ -38,10 +38,11 @@ export const DeleteUserDialog: React.FC<DeleteUserDialogProps> = ({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+          <AlertDialogTitle>Confirmar Desativação</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza de que deseja excluir o usuário <strong>{user?.name}</strong>?
-            Esta ação não pode ser desfeita e todos os dados do usuário serão removidos permanentemente.
+            Tem certeza de que deseja desativar o usuário <strong>{user?.name}</strong>?
+            O usuário será desativado e perderá acesso ao sistema, mas seus dados serão mantidos.
+            Esta ação pode ser revertida reativando o usuário posteriormente.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -53,7 +54,7 @@ export const DeleteUserDialog: React.FC<DeleteUserDialogProps> = ({
             disabled={isLoading}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isLoading ? 'Excluindo...' : 'Excluir'}
+            {isLoading ? 'Desativando...' : 'Desativar'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
