@@ -45,7 +45,6 @@ export const useUsers = () => {
 
       if (rolesError) {
         console.error('❌ Error fetching roles:', rolesError);
-        // Não falhar se não conseguir buscar roles, apenas continuar sem eles
         console.warn('⚠️ Continuing without roles data');
       }
 
@@ -66,6 +65,7 @@ export const useUsers = () => {
     mutationFn: async (userData: { name: string; email: string; password: string; phone?: string; role: string }) => {
       try {
         console.log('🔄 Starting user creation process...', userData);
+        console.log('🎯 ROLE SOLICITADA:', userData.role);
         
         // Criar usuário no auth
         console.log('📝 Creating auth user with signUp...');
@@ -137,31 +137,54 @@ export const useUsers = () => {
           }
         }
 
-        // Tentar atribuir role - como admin usando o usuário atual
-        console.log('🔐 Assigning role:', userData.role);
+        // CORREÇÃO CRÍTICA: Atribuir a role exata que foi solicitada
+        console.log('🔐 Assigning EXACT role:', userData.role);
+        console.log('🔐 Role type:', typeof userData.role);
         
-        // Primeiro verificar se o usuário atual é admin
-        const { data: currentUserRoles, error: currentRolesError } = await supabase
+        // Primeiro, remover todas as roles existentes do usuário
+        const { error: deleteRolesError } = await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', authData.user.id);
+
+        if (deleteRolesError) {
+          console.error('❌ Error deleting existing roles:', deleteRolesError);
+        }
+
+        // Verificar se o usuário atual é admin para poder atribuir roles
+        const { data: currentUser } = await supabase.auth.getUser();
+        const { data: currentUserRoles } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+          .eq('user_id', currentUser.data.user?.id);
 
         const isCurrentUserAdmin = currentUserRoles?.some(r => r.role === 'admin');
         
         if (isCurrentUserAdmin) {
+          console.log('✅ Current user is admin, can assign roles');
+          
+          // Atribuir EXATAMENTE a role solicitada
           const { error: roleError } = await supabase
             .from('user_roles')
             .insert({
               user_id: authData.user.id,
-              role: userData.role as UserRole,
-              assigned_by: (await supabase.auth.getUser()).data.user?.id
+              role: userData.role as UserRole, // USAR EXATAMENTE A ROLE SOLICITADA
+              assigned_by: currentUser.data.user?.id
             });
 
           if (roleError) {
             console.error('❌ Role assignment error:', roleError);
             console.warn('⚠️ Role assignment failed, but user was created');
           } else {
-            console.log('✅ Role assigned successfully');
+            console.log('✅ Role assigned successfully:', userData.role);
+            
+            // Verificar se a role foi realmente atribuída corretamente
+            const { data: verifyRole } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', authData.user.id);
+            
+            console.log('🔍 VERIFICAÇÃO - Role atribuída no banco:', verifyRole);
           }
         } else {
           console.warn('⚠️ Current user is not admin, skipping role assignment');
@@ -224,22 +247,29 @@ export const useUsers = () => {
 
   const updateUserRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      console.log('🔄 Updating user role to:', role);
+      
       // Remover roles existentes
       await supabase
         .from('user_roles')
         .delete()
         .eq('user_id', userId);
 
-      // Adicionar nova role
+      // Adicionar EXATAMENTE a nova role solicitada
       const { error } = await supabase
         .from('user_roles')
         .insert({
           user_id: userId,
-          role: role as UserRole,
+          role: role as UserRole, // USAR EXATAMENTE A ROLE SOLICITADA
           assigned_by: (await supabase.auth.getUser()).data.user?.id
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Role update error:', error);
+        throw error;
+      }
+      
+      console.log('✅ Role updated successfully to:', role);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
