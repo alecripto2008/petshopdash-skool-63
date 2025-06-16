@@ -2,15 +2,20 @@
 import { format, endOfDay } from 'date-fns';
 import { toast } from "sonner";
 import { CalendarEvent, EventFormData } from '@/types/calendar';
-
-// API base URL
-const API_BASE_URL = 'https://webhook.n8nlabz.com.br/webhook/agenda';
+import { getWebhookUrl } from './webhookService';
 
 // Fetch events with GET method
 export async function fetchCalendarEvents(selectedDate?: Date | null) {
   try {
+    // Busca a URL do webhook dinamicamente
+    const baseUrl = await getWebhookUrl('carrega_agenda') || await getWebhookUrl('Carrega Agenda');
+    
+    if (!baseUrl) {
+      throw new Error('Webhook de carregamento de agenda não configurado');
+    }
+    
     // Format date parameters for the API
-    let url = API_BASE_URL;
+    let url = baseUrl;
     
     // If a date is selected, add query parameters for start and end dates
     if (selectedDate) {
@@ -38,6 +43,13 @@ export async function fetchCalendarEvents(selectedDate?: Date | null) {
 // Refresh events with POST method
 export async function refreshCalendarEventsPost(selectedDate?: Date | null) {
   try {
+    // Busca a URL do webhook dinamicamente
+    const baseUrl = await getWebhookUrl('carrega_agenda') || await getWebhookUrl('Carrega Agenda');
+    
+    if (!baseUrl) {
+      throw new Error('Webhook de carregamento de agenda não configurado');
+    }
+    
     // Create payload with selected date if available
     const payload: any = {};
     
@@ -50,7 +62,7 @@ export async function refreshCalendarEventsPost(selectedDate?: Date | null) {
       console.log('Refreshing events with payload:', payload);
     }
     
-    const response = await fetch(API_BASE_URL, {
+    const response = await fetch(baseUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -75,6 +87,13 @@ export async function refreshCalendarEventsPost(selectedDate?: Date | null) {
 // Add a new event
 export async function addCalendarEvent(formData: EventFormData) {
   try {
+    // Busca a URL do webhook dinamicamente
+    const baseUrl = await getWebhookUrl('cria_evento') || await getWebhookUrl('Cria Evento');
+    
+    if (!baseUrl) {
+      throw new Error('Webhook de criação de evento não configurado');
+    }
+    
     // Format the date and times for the API
     const { date, startTime, endTime, summary, description, email } = formData;
     const dateStr = format(date, "yyyy-MM-dd");
@@ -92,7 +111,7 @@ export async function addCalendarEvent(formData: EventFormData) {
     
     console.log('Adding event with payload:', payload);
     
-    const response = await fetch(`${API_BASE_URL}/adicionar`, {
+    const response = await fetch(baseUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -116,6 +135,13 @@ export async function addCalendarEvent(formData: EventFormData) {
 // Edit an existing event
 export async function editCalendarEvent(eventId: string, formData: EventFormData) {
   try {
+    // Busca a URL do webhook dinamicamente
+    const baseUrl = await getWebhookUrl('altera_evento') || await getWebhookUrl('Altera Evento');
+    
+    if (!baseUrl) {
+      throw new Error('Webhook de alteração de evento não configurado');
+    }
+    
     // Format the date and times for the API
     const { date, startTime, endTime, summary, description, email } = formData;
     const dateStr = format(date, "yyyy-MM-dd");
@@ -134,7 +160,7 @@ export async function editCalendarEvent(eventId: string, formData: EventFormData
     
     console.log('Updating event with payload:', payload);
     
-    const response = await fetch(`${API_BASE_URL}/alterar`, {
+    const response = await fetch(baseUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -158,13 +184,20 @@ export async function editCalendarEvent(eventId: string, formData: EventFormData
 // Delete an event
 export async function deleteCalendarEvent(eventId: string) {
   try {
+    // Busca a URL do webhook dinamicamente
+    const baseUrl = await getWebhookUrl('exclui_evento') || await getWebhookUrl('Exclui Evento');
+    
+    if (!baseUrl) {
+      throw new Error('Webhook de exclusão de evento não configurado');
+    }
+    
     const payload = {
       id: eventId
     };
     
     console.log('Deleting event with payload:', payload);
     
-    const response = await fetch(`${API_BASE_URL}/excluir`, {
+    const response = await fetch(baseUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

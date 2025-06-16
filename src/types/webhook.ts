@@ -10,9 +10,24 @@ export interface WebhookConfig {
 }
 
 export const WEBHOOK_IDENTIFIERS = {
-  PAUSE_BOT: 'pause_bot',
-  UPLOAD_RAG: 'upload_rag',
-  CONFIRM_EVOLUTION_STATUS: 'confirm_evolution_status',
-  UPDATE_EVOLUTION_QR: 'update_evolution_qr',
-  CONFIG_AGENT: 'config_agent'
-}
+  // Mensagens
+  ENVIAR_MENSAGEM: 'enviar_mensagem',
+  PAUSA_BOT: 'pausa_bot',
+  CHAT_ENVIAR_MENSAGEM: 'chat_enviar_mensagem',
+  
+  // Agenda
+  CARREGA_AGENDA: 'carrega_agenda',
+  CRIA_EVENTO: 'cria_evento',
+  ALTERA_EVENTO: 'altera_evento',
+  EXCLUI_EVENTO: 'exclui_evento',
+  
+  // RAG Documentos
+  INSERIR_DADOS_RAG_DOCS: 'inserir_dados_rag_documentos',
+  DELETAR_ARQUIVO_RAG_DOCS: 'deletar_arquivo_rag_documentos',
+  DELETAR_TUDO_RAG_DOCS: 'deletar_tudo_rag_documentos',
+  
+  // RAG Produtos
+  INSERIR_DADOS_RAG_PRODUTOS: 'inserir_dados_rag_produtos',
+  DELETAR_ARQUIVO_RAG_PRODUTOS: 'deletar_arquivo_rag_produtos',
+  DELETAR_TUDO_RAG_PRODUTOS: 'deletar_tudo_rag_produtos'
+} as const;

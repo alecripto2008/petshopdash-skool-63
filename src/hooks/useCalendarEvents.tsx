@@ -9,6 +9,7 @@ import {
 } from '@/services/calendarApi';
 import { CalendarEvent, EventFormData } from '@/types/calendar';
 import { toast } from 'sonner';
+import { clearWebhookCache } from '@/services/webhookService';
 
 export function useCalendarEvents(selectedDate?: Date | null) {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -41,6 +42,8 @@ export function useCalendarEvents(selectedDate?: Date | null) {
   const refreshEventsPost = useCallback(async () => {
     setIsLoading(true);
     try {
+      // Limpa o cache antes de fazer a requisição para garantir URLs atualizadas
+      clearWebhookCache();
       const refreshedEvents = await refreshCalendarEventsPost(selectedDate);
       setEvents(refreshedEvents);
       setLastUpdated(new Date());
@@ -56,6 +59,8 @@ export function useCalendarEvents(selectedDate?: Date | null) {
   const addEvent = async (formData: EventFormData) => {
     setIsSubmitting(true);
     try {
+      // Limpa o cache antes de fazer a requisição
+      clearWebhookCache();
       const success = await addCalendarEvent(formData);
       if (success) {
         await fetchEvents(); // Refresh events
@@ -70,6 +75,8 @@ export function useCalendarEvents(selectedDate?: Date | null) {
   const editEvent = async (eventId: string, formData: EventFormData) => {
     setIsSubmitting(true);
     try {
+      // Limpa o cache antes de fazer a requisição
+      clearWebhookCache();
       const success = await editCalendarEvent(eventId, formData);
       if (success) {
         await fetchEvents(); // Refresh events
@@ -84,6 +91,8 @@ export function useCalendarEvents(selectedDate?: Date | null) {
   const deleteEvent = async (eventId: string) => {
     setIsSubmitting(true);
     try {
+      // Limpa o cache antes de fazer a requisição
+      clearWebhookCache();
       const success = await deleteCalendarEvent(eventId);
       if (success) {
         await fetchEvents(); // Refresh events
