@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -62,7 +61,7 @@ export const useUsers = () => {
       console.log('🚀 Starting user creation process...', userData);
       
       try {
-        // Criar usuário no auth - o trigger handle_new_user() criará o perfil automaticamente
+        // Criar usuário no auth
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: userData.email,
           password: userData.password,
@@ -85,8 +84,24 @@ export const useUsers = () => {
 
         console.log('✅ Auth user created:', authData.user.id);
 
-        // Aguardar um pouco para o trigger processar
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Criar perfil manualmente para garantir que existe
+        console.log('👤 Creating profile manually...');
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            name: userData.name,
+            email: userData.email,
+            phone: userData.phone || null,
+            active: true
+          });
+
+        if (profileError) {
+          console.error('❌ Profile creation error:', profileError);
+          throw new Error(`Erro ao criar perfil: ${profileError.message}`);
+        }
+
+        console.log('✅ Profile created successfully');
 
         // Atribuir role
         console.log('🔐 Assigning role:', userData.role);
