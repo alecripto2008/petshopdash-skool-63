@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { LineChart, Users, Smartphone, PawPrint, CreditCard, DollarSign } from 'lucide-react';
 import { useClientStats } from '@/hooks/useClientStats';
@@ -14,6 +13,7 @@ import RecentClientsTable from '@/components/metrics/RecentClientsTable';
 import PaymentMethodsChart from '@/components/metrics/PaymentMethodsChart';
 import ServiceTypesChart from '@/components/metrics/ServiceTypesChart';
 import MonthlyPaymentsChart from '@/components/metrics/MonthlyPaymentsChart';
+import TokenCostCard from '@/components/metrics/TokenCostCard';
 
 const MetricsDashboard = () => {
   const { stats, loading, refetchStats } = useClientStats();
@@ -147,6 +147,11 @@ const MetricsDashboard = () => {
             iconBgClass="bg-green-100 dark:bg-green-900/30"
             iconTextClass="text-green-600 dark:text-green-400"
           />
+        </div>
+        
+        {/* Token Cost Card - Full Width */}
+        <div className="mb-8">
+          <TokenCostCard />
         </div>
         
         {/* Gráficos e Tabelas */}
