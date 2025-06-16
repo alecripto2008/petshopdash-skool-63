@@ -28,7 +28,7 @@ const ChatBotActions = ({ selectedPhoneNumber, selectedChat, isLoading }: ChatBo
 
   const pauseBot = async (phoneNumber: string, duration: number | null) => {
     try {
-      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.PAUSE_BOT);
+      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.PAUSA_BOT);
       
       const response = await fetch(webhookUrl, {
         method: 'POST',

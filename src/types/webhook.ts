@@ -29,5 +29,8 @@ export const WEBHOOK_IDENTIFIERS = {
   // RAG Produtos
   INSERIR_DADOS_RAG_PRODUTOS: 'inserir_dados_rag_produtos',
   DELETAR_ARQUIVO_RAG_PRODUTOS: 'deletar_arquivo_rag_produtos',
-  DELETAR_TUDO_RAG_PRODUTOS: 'deletar_tudo_rag_produtos'
+  DELETAR_TUDO_RAG_PRODUTOS: 'deletar_tudo_rag_produtos',
+  
+  // Configuração de Agente
+  CONFIG_AGENT: 'config_agent'
 } as const;
