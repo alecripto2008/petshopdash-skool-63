@@ -48,24 +48,31 @@ export async function loadWebhooks(): Promise<Record<string, string>> {
  * Obtém a URL de um webhook específico pelo seu identificador ou nome.
  */
 export async function getWebhookUrl(identifier: string): Promise<string> {
+  console.log("Getting webhook URL for identifier:", identifier);
+  
   if (!webhookCache) {
+    console.log("Cache not loaded, loading webhooks...");
     await loadWebhooks();
   }
 
   // Primeiro tenta pelo identificador
   let url = webhookCache?.[identifier];
+  console.log("Found URL by identifier:", url);
   
   // Se não encontrar, tenta pelo nome formatado
   if (!url) {
     const formattedName = identifier.toLowerCase().replace(/\s+/g, '_');
     url = webhookCache?.[formattedName];
+    console.log("Found URL by formatted name:", formattedName, "->", url);
   }
 
   if (!url) {
     console.warn(`Webhook with identifier '${identifier}' not found`);
+    console.log("Available webhook identifiers:", Object.keys(webhookCache || {}));
     return "";
   }
 
+  console.log("Returning webhook URL:", url);
   return url;
 }
 

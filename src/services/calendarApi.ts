@@ -2,13 +2,14 @@
 import { format, endOfDay } from 'date-fns';
 import { toast } from "sonner";
 import { CalendarEvent, EventFormData } from '@/types/calendar';
-import { getWebhookUrl } from './webhookService';
+import { getWebhookUrl, clearWebhookCache } from './webhookService';
+import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 
 // Fetch events with GET method
 export async function fetchCalendarEvents(selectedDate?: Date | null) {
   try {
     // Busca a URL do webhook dinamicamente
-    const baseUrl = await getWebhookUrl('carrega_agenda') || await getWebhookUrl('Carrega Agenda');
+    const baseUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.CARREGA_AGENDA);
     
     if (!baseUrl) {
       throw new Error('Webhook de carregamento de agenda não configurado');
@@ -44,7 +45,7 @@ export async function fetchCalendarEvents(selectedDate?: Date | null) {
 export async function refreshCalendarEventsPost(selectedDate?: Date | null) {
   try {
     // Busca a URL do webhook dinamicamente
-    const baseUrl = await getWebhookUrl('carrega_agenda') || await getWebhookUrl('Carrega Agenda');
+    const baseUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.CARREGA_AGENDA);
     
     if (!baseUrl) {
       throw new Error('Webhook de carregamento de agenda não configurado');
@@ -87,10 +88,17 @@ export async function refreshCalendarEventsPost(selectedDate?: Date | null) {
 // Add a new event
 export async function addCalendarEvent(formData: EventFormData) {
   try {
+    console.log('Starting to add calendar event with data:', formData);
+    
+    // Limpa o cache antes de buscar o webhook
+    clearWebhookCache();
+    
     // Busca a URL do webhook dinamicamente
-    const baseUrl = await getWebhookUrl('cria_evento') || await getWebhookUrl('Cria Evento');
+    const baseUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.CRIA_EVENTO);
+    console.log('Retrieved webhook URL for creating event:', baseUrl);
     
     if (!baseUrl) {
+      console.error('Webhook URL not found for identifier:', WEBHOOK_IDENTIFIERS.CRIA_EVENTO);
       throw new Error('Webhook de criação de evento não configurado');
     }
     
@@ -110,6 +118,7 @@ export async function addCalendarEvent(formData: EventFormData) {
     };
     
     console.log('Adding event with payload:', payload);
+    console.log('Sending request to webhook URL:', baseUrl);
     
     const response = await fetch(baseUrl, {
       method: 'POST',
@@ -119,15 +128,23 @@ export async function addCalendarEvent(formData: EventFormData) {
       body: JSON.stringify(payload),
     });
     
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+    
     if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('Error response:', errorText);
+      throw new Error(`HTTP error! Status: ${response.status} - ${errorText}`);
     }
+    
+    const responseData = await response.json();
+    console.log('Success response:', responseData);
     
     toast.success("Evento adicionado com sucesso!");
     return true;
   } catch (err) {
     console.error('Error adding event:', err);
-    toast.error("Erro ao adicionar evento. Tente novamente.");
+    toast.error(`Erro ao adicionar evento: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
     return false;
   }
 }
@@ -135,8 +152,11 @@ export async function addCalendarEvent(formData: EventFormData) {
 // Edit an existing event
 export async function editCalendarEvent(eventId: string, formData: EventFormData) {
   try {
+    // Limpa o cache antes de fazer a requisição
+    clearWebhookCache();
+    
     // Busca a URL do webhook dinamicamente
-    const baseUrl = await getWebhookUrl('altera_evento') || await getWebhookUrl('Altera Evento');
+    const baseUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.ALTERA_EVENTO);
     
     if (!baseUrl) {
       throw new Error('Webhook de alteração de evento não configurado');
@@ -184,8 +204,11 @@ export async function editCalendarEvent(eventId: string, formData: EventFormData
 // Delete an event
 export async function deleteCalendarEvent(eventId: string) {
   try {
+    // Limpa o cache antes de fazer a requisição
+    clearWebhookCache();
+    
     // Busca a URL do webhook dinamicamente
-    const baseUrl = await getWebhookUrl('exclui_evento') || await getWebhookUrl('Exclui Evento');
+    const baseUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.EXCLUI_EVENTO);
     
     if (!baseUrl) {
       throw new Error('Webhook de exclusão de evento não configurado');
