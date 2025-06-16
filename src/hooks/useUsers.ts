@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -59,23 +58,10 @@ export const useUsers = () => {
 
   const addUserMutation = useMutation({
     mutationFn: async (userData: { name: string; email: string; password: string; phone?: string; role: string }) => {
-      console.log('🚀 Starting user creation process...', userData);
+      console.log('🚀 Creating new user...', { email: userData.email, name: userData.name });
       
       try {
-        // Primeiro verificar se já existe
-        const { data: existingUser } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('email', userData.email)
-          .maybeSingle();
-
-        if (existingUser) {
-          throw new Error('Este email já está sendo usado por outro usuário');
-        }
-
-        console.log('📧 Email disponível, criando usuário...');
-
-        // Criar usuário no auth
+        // Step 1: Create user with Supabase Auth
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: userData.email,
           password: userData.password,
@@ -83,13 +69,17 @@ export const useUsers = () => {
             data: {
               name: userData.name,
               phone: userData.phone || null
-            }
+            },
+            emailRedirectTo: undefined // Disable email confirmation for admin creation
           }
         });
 
         if (authError) {
-          console.error('❌ Erro na criação do usuário:', authError);
-          throw new Error(`Erro ao criar usuário: ${authError.message}`);
+          console.error('❌ Auth creation error:', authError);
+          if (authError.message.includes('already registered')) {
+            throw new Error('Este email já está sendo usado por outro usuário');
+          }
+          throw new Error(`Erro ao criar conta: ${authError.message}`);
         }
 
         if (!authData.user?.id) {
@@ -97,40 +87,24 @@ export const useUsers = () => {
         }
 
         const userId = authData.user.id;
-        console.log('✅ Usuário criado no auth:', userId);
+        console.log('✅ User created in auth:', userId);
 
-        // Aguardar um pouco para garantir que o trigger teve tempo de executar
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Step 2: Wait a bit for trigger to complete
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
-        // Verificar se o perfil foi criado pelo trigger
-        let profileExists = false;
-        const { data: existingProfile } = await supabase
+        // Step 3: Check if profile was created by trigger, if not create it manually
+        const { data: existingProfile, error: checkError } = await supabase
           .from('profiles')
           .select('id')
           .eq('id', userId)
           .maybeSingle();
 
-        if (existingProfile) {
-          console.log('✅ Perfil criado pelo trigger, atualizando dados...');
-          
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({
-              name: userData.name,
-              phone: userData.phone || null,
-            })
-            .eq('id', userId);
+        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
+          console.error('❌ Error checking profile:', checkError);
+        }
 
-          if (updateError) {
-            console.error('❌ Erro ao atualizar perfil:', updateError);
-            throw new Error(`Erro ao atualizar perfil: ${updateError.message}`);
-          }
-          
-          profileExists = true;
-        } else {
-          // Criar perfil manualmente se o trigger falhou
-          console.log('📝 Criando perfil manualmente...');
-          
+        if (!existingProfile) {
+          console.log('📝 Creating profile manually...');
           const { error: profileError } = await supabase
             .from('profiles')
             .insert({
@@ -142,50 +116,57 @@ export const useUsers = () => {
             });
 
           if (profileError) {
-            console.error('❌ Erro ao criar perfil:', profileError);
+            console.error('❌ Profile creation error:', profileError);
             throw new Error(`Erro ao criar perfil: ${profileError.message}`);
           }
-          
-          profileExists = true;
-        }
+        } else {
+          console.log('✅ Profile already exists, updating...');
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({
+              name: userData.name,
+              phone: userData.phone || null
+            })
+            .eq('id', userId);
 
-        if (profileExists) {
-          // Atribuir role
-          console.log('🔐 Atribuindo role:', userData.role);
-          
-          const { error: roleError } = await supabase
-            .from('user_roles')
-            .insert({
-              user_id: userId,
-              role: userData.role as UserRole,
-              assigned_by: null
-            });
-
-          if (roleError) {
-            console.error('❌ Erro ao atribuir role:', roleError);
-            // Tentar atualizar se já existe
-            const { error: roleUpdateError } = await supabase
-              .from('user_roles')
-              .update({ role: userData.role as UserRole })
-              .eq('user_id', userId);
-
-            if (roleUpdateError) {
-              console.error('❌ Erro ao atualizar role:', roleUpdateError);
-              throw new Error(`Erro ao atribuir permissão: ${roleUpdateError.message}`);
-            }
+          if (updateError) {
+            console.error('❌ Profile update error:', updateError);
           }
         }
 
-        console.log('🎉 Usuário criado com sucesso!');
-        return authData.user;
+        // Step 4: Assign role
+        console.log('🔐 Assigning role:', userData.role);
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: userId,
+            role: userData.role as UserRole,
+            assigned_by: null
+          });
+
+        if (roleError) {
+          console.error('❌ Role assignment error:', roleError);
+          // Try to update if role already exists
+          const { error: roleUpdateError } = await supabase
+            .from('user_roles')
+            .update({ role: userData.role as UserRole })
+            .eq('user_id', userId);
+
+          if (roleUpdateError) {
+            console.error('❌ Role update error:', roleUpdateError);
+          }
+        }
+
+        console.log('🎉 User creation completed successfully!');
+        return { id: userId, ...userData };
         
       } catch (error: any) {
-        console.error('💥 Erro durante criação:', error);
+        console.error('💥 User creation failed:', error);
         throw error;
       }
     },
     onSuccess: () => {
-      console.log('✅ Invalidando cache e atualizando lista...');
+      console.log('✅ Refreshing user list...');
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast({
         title: "Sucesso!",
@@ -193,7 +174,7 @@ export const useUsers = () => {
       });
     },
     onError: (error: any) => {
-      console.error('❌ Erro na mutação:', error);
+      console.error('❌ Mutation error:', error);
       toast({
         title: "Erro",
         description: error.message || "Erro ao criar usuário",
