@@ -79,9 +79,9 @@ export const useTokenStats = () => {
         monthlyGroups[monthKey][day] += cost;
       });
 
-      // Preparar dados para os gráficos (últimos 6 meses)
+      // Preparar dados para os gráficos (últimos 6 meses em ordem decrescente)
       const monthlyStats: MonthlyTokenStats[] = [];
-      for (let i = 5; i >= 0; i--) {
+      for (let i = 0; i < 6; i++) {
         const date = new Date();
         date.setMonth(date.getMonth() - i);
         const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
