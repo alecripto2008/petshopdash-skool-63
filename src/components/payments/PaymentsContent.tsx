@@ -294,7 +294,7 @@ const PaymentsContent = () => {
           </Button>
           <Button 
             onClick={() => setIsDialogOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-black hover:bg-gray-800 text-white"
           >
             <Plus className="mr-2 h-4 w-4" />
             Incluir Pagamento
