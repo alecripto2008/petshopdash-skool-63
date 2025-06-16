@@ -2,18 +2,26 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+interface DailyTokenCost {
+  day: number;
+  total: number;
+}
+
+interface MonthlyTokenStats {
+  monthName: string;
+  dailyCosts: DailyTokenCost[];
+  monthTotal: number;
+}
+
 interface TokenStats {
   dailyTokenCost: number;
-  monthlyTokenCosts: Array<{
-    month: string;
-    total: number;
-  }>;
+  monthlyStats: MonthlyTokenStats[];
 }
 
 export const useTokenStats = () => {
   const [stats, setStats] = useState<TokenStats>({
     dailyTokenCost: 0,
-    monthlyTokenCosts: []
+    monthlyStats: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -38,9 +46,9 @@ export const useTokenStats = () => {
 
       const dailyTotal = dailyData?.reduce((sum, item) => sum + (Number(item.totalcostreal) || 0), 0) || 0;
 
-      // Buscar dados mensais dos últimos 12 meses
+      // Buscar dados dos últimos 6 meses
       const monthsAgo = new Date();
-      monthsAgo.setMonth(monthsAgo.getMonth() - 12);
+      monthsAgo.setMonth(monthsAgo.getMonth() - 6);
 
       const { data: monthlyData, error: monthlyError } = await supabase
         .from('tokens')
@@ -52,38 +60,55 @@ export const useTokenStats = () => {
         console.error('Error fetching monthly token costs:', monthlyError);
       }
 
-      // Agrupar por mês
-      const monthlyGroups: Record<string, number> = {};
+      // Agrupar por mês e dia
+      const monthlyGroups: Record<string, Record<number, number>> = {};
       const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
       
       monthlyData?.forEach(item => {
         const date = new Date(item.created_at);
         const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+        const day = date.getDate();
         const cost = Number(item.totalcostreal) || 0;
         
         if (!monthlyGroups[monthKey]) {
-          monthlyGroups[monthKey] = 0;
+          monthlyGroups[monthKey] = {};
         }
-        monthlyGroups[monthKey] += cost;
+        if (!monthlyGroups[monthKey][day]) {
+          monthlyGroups[monthKey][day] = 0;
+        }
+        monthlyGroups[monthKey][day] += cost;
       });
 
-      // Preparar dados para o gráfico (últimos 12 meses)
-      const monthlyTokenCosts = [];
-      for (let i = 11; i >= 0; i--) {
+      // Preparar dados para os gráficos (últimos 6 meses)
+      const monthlyStats: MonthlyTokenStats[] = [];
+      for (let i = 5; i >= 0; i--) {
         const date = new Date();
         date.setMonth(date.getMonth() - i);
         const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-        const monthName = monthNames[date.getMonth()];
+        const monthName = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
         
-        monthlyTokenCosts.push({
-          month: monthName,
-          total: monthlyGroups[monthKey] || 0
+        const monthData = monthlyGroups[monthKey] || {};
+        const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+        
+        const dailyCosts: DailyTokenCost[] = [];
+        let monthTotal = 0;
+        
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dayTotal = monthData[day] || 0;
+          dailyCosts.push({ day, total: dayTotal });
+          monthTotal += dayTotal;
+        }
+        
+        monthlyStats.push({
+          monthName,
+          dailyCosts,
+          monthTotal
         });
       }
 
       setStats({
         dailyTokenCost: dailyTotal,
-        monthlyTokenCosts
+        monthlyStats
       });
       
     } catch (error) {
