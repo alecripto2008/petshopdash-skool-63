@@ -73,7 +73,7 @@ export const useUserPermissions = () => {
           canAccessSchedule: role === 'admin' || role === 'manager' || role === 'user' || role === 'viewer',
           canAccessClients: role === 'admin' || role === 'manager' || role === 'user',
           canAccessProducts: role === 'admin' || role === 'manager' || role === 'user',
-          canAccessUsers: role === 'admin',
+          canAccessUsers: role === 'admin' || role === 'manager',
           canAccessChats: role === 'admin' || role === 'manager',
         };
 
