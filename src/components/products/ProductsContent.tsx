@@ -3,13 +3,13 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, RefreshCw, Trash2, AlertTriangle } from 'lucide-react';
+import { Upload, RefreshCw, Trash2, AlertTriangle, Search } from 'lucide-react';
 import { useProducts } from '@/hooks/useProducts';
 import ProductGrid from './ProductGrid';
-import SearchBar from './SearchBar';
 import AddProductDialog from './AddProductDialog';
 import { LoadingSpinner } from '@/components/config/LoadingSpinner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,22 +61,36 @@ const ProductsContent = () => {
               </CardDescription>
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
-              <SearchBar 
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                onRefresh={handleRefresh}
-                isRefreshing={isRefreshing}
-                placeholder="Buscar produtos..."
-              />
-              <Button 
-                onClick={() => setIsAddDialogOpen(true)}
-                className="flex items-center gap-2"
-                disabled={!canModifyProducts}
-                title={!canModifyProducts ? "Você não tem permissão para adicionar produtos" : ""}
-              >
-                <Upload className="h-4 w-4" />
-                Adicionar Produto
-              </Button>
+              <div className="relative flex-1 sm:w-64">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Buscar produtos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="whitespace-nowrap"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  {isRefreshing ? 'Atualizando...' : 'Atualizar'}
+                </Button>
+                <Button 
+                  onClick={() => setIsAddDialogOpen(true)}
+                  className="flex items-center gap-2"
+                  disabled={!canModifyProducts}
+                  title={!canModifyProducts ? "Você não tem permissão para adicionar produtos" : ""}
+                >
+                  <Upload className="h-4 w-4" />
+                  Adicionar Produto
+                </Button>
+              </div>
             </div>
           </div>
         </CardHeader>
