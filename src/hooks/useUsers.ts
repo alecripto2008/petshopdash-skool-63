@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -79,15 +80,16 @@ export const useUsers = () => {
 
         console.log('📧 Email available, proceeding with signup...');
 
-        // Criar usuário com Supabase Auth usando signUp admin
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        // Usar signUp normal ao invés de admin.createUser
+        const { data: authData, error: authError } = await supabase.auth.signUp({
           email: userData.email,
           password: userData.password,
-          user_metadata: {
-            name: userData.name,
-            phone: userData.phone || null
-          },
-          email_confirm: true // Auto-confirmar o email
+          options: {
+            data: {
+              name: userData.name,
+              phone: userData.phone || null
+            }
+          }
         });
 
         if (authError) {
@@ -102,26 +104,48 @@ export const useUsers = () => {
         const userId = authData.user.id;
         console.log('✅ User created in auth:', userId);
 
-        // Criar perfil manualmente
-        console.log('📝 Creating profile...');
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: userId,
-            name: userData.name,
-            email: userData.email,
-            phone: userData.phone || null,
-            active: true
-          });
+        // Aguardar um pouco para o trigger processar
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-        if (profileError) {
-          console.error('❌ Profile creation error:', profileError);
-          // Se falhar na criação do perfil, tentar deletar o usuário
-          await supabase.auth.admin.deleteUser(userId);
-          throw new Error(`Erro ao criar perfil: ${profileError.message}`);
+        // Verificar se o perfil foi criado pelo trigger
+        let profileExists = false;
+        for (let i = 0; i < 5; i++) {
+          const { data: profile, error: profileCheckError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', userId)
+            .maybeSingle();
+
+          if (profile) {
+            profileExists = true;
+            console.log('✅ Profile found via trigger');
+            break;
+          }
+
+          console.log(`⏳ Waiting for profile creation (attempt ${i + 1}/5)...`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
-        console.log('✅ Profile created successfully');
+        // Se o perfil não foi criado pelo trigger, criar manualmente
+        if (!profileExists) {
+          console.log('📝 Creating profile manually...');
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: userId,
+              name: userData.name,
+              email: userData.email,
+              phone: userData.phone || null,
+              active: true
+            });
+
+          if (profileError) {
+            console.error('❌ Profile creation error:', profileError);
+            throw new Error(`Erro ao criar perfil: ${profileError.message}`);
+          }
+
+          console.log('✅ Profile created manually');
+        }
 
         // Atribuir role
         console.log('🔐 Assigning role:', userData.role);
@@ -129,8 +153,7 @@ export const useUsers = () => {
           .from('user_roles')
           .insert({
             user_id: userId,
-            role: userData.role as UserRole,
-            assigned_by: null
+            role: userData.role as UserRole
           });
 
         if (roleError) {
