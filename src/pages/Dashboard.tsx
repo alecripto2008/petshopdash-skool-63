@@ -38,6 +38,9 @@ const Dashboard = () => {
       </div>
     );
   }
+
+  console.log('Permissions:', permissions);
+  console.log('Can access token cost:', permissions.canAccessTokenCost);
   
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
