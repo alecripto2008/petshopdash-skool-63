@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -10,6 +9,12 @@ import AddClientDialog from '@/components/clients/AddClientDialog';
 import EditClientDialog from '@/components/clients/EditClientDialog';
 import ClientDetailSheet from '@/components/clients/ClientDetailSheet';
 import { useClientManagement } from '@/hooks/useClientManagement';
+import { Contact } from '@/types/client';
+
+interface MonthGroup {
+  name: string;
+  clients: Contact[];
+}
 
 const ClientsDashboard = () => {
   const { user, isLoading } = useAuth();
@@ -56,7 +61,7 @@ const ClientsDashboard = () => {
 
   // Separação dos clientes por mês
   const clientsByMonth = React.useMemo(() => {
-    const grouped = contacts.reduce((acc, contact) => {
+    const grouped: Record<string, MonthGroup> = contacts.reduce((acc, contact) => {
       const date = contact.lastContact ? new Date(contact.lastContact.split('/').reverse().join('-')) : new Date();
       const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
       const monthName = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
@@ -69,17 +74,16 @@ const ClientsDashboard = () => {
       }
       acc[monthKey].clients.push(contact);
       return acc;
-    }, {});
+    }, {} as Record<string, MonthGroup>);
 
     return Object.entries(grouped)
       .sort(([a], [b]) => b.localeCompare(a))
-      .map(([key, value]) => value);
+      .map(([, value]) => value);
   }, [contacts]);
 
   // Total de clientes do mês atual
   const currentMonth = React.useMemo(() => {
     const now = new Date();
-    const currentMonthKey = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
     return clientsByMonth.find(month => month.name.includes(now.getFullYear().toString()) && 
       month.name.toLowerCase().includes(now.toLocaleDateString('pt-BR', { month: 'long' }).toLowerCase()));
   }, [clientsByMonth]);
