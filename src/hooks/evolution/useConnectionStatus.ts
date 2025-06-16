@@ -1,6 +1,8 @@
 
 import { useRef, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { getWebhookUrl } from '@/services/webhookService';
+import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 
 type ConnectionStatus = 'waiting' | 'confirmed' | 'failed' | null;
 
@@ -16,20 +18,75 @@ export const useConnectionStatus = (
 
   const checkConnectionStatus = async () => {
     try {
-      // Functionality disabled
-      toast({
-        title: "Funcionalidade desativada",
-        description: "A verificação de status de conexão foi desativada.",
-        variant: "destructive"
+      console.log('Checking connection status for:', instanceName);
+      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.CONFIRM_EVOLUTION_STATUS);
+      
+      if (!webhookUrl) {
+        throw new Error('Webhook de verificação de status não configurado');
+      }
+      
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          instanceName: instanceName.trim() 
+        }),
       });
       
-      // Simulate failure after some attempts to avoid hanging in waiting state
-      retryCountRef.current += 1;
-      if (retryCountRef.current >= maxRetries) {
-        stopChecking();
-        onStatusChange('failed');
-        retryCountRef.current = 0;
-        onRetryNeeded();
+      if (response.ok) {
+        const responseText = await response.text();
+        console.log('Connection status response:', responseText);
+        
+        let responseData;
+        try {
+          responseData = JSON.parse(responseText);
+          console.log('Parsed response data:', responseData);
+        } catch (parseError) {
+          console.error('Error parsing response JSON:', parseError);
+          toast({
+            title: "Erro no formato da resposta",
+            description: "Não foi possível processar a resposta do servidor.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        if (responseData && typeof responseData.respond === 'string') {
+          const status = responseData.respond;
+          console.log('Response status value:', status);
+          
+          if (status === "positivo") {
+            console.log('Connection confirmed - stopping interval');
+            stopChecking();
+            onStatusChange('confirmed');
+            retryCountRef.current = 0;
+            toast({
+              title: "Conexão estabelecida!",
+              description: "Seu WhatsApp foi conectado com sucesso.",
+              variant: "default" 
+            });
+          } else if (status === "negativo") {
+            retryCountRef.current += 1;
+            console.log(`Connection failed - attempt ${retryCountRef.current} of ${maxRetries}`);
+            
+            if (retryCountRef.current >= maxRetries) {
+              console.log('Maximum retry attempts reached');
+              stopChecking();
+              onStatusChange('failed');
+              retryCountRef.current = 0;
+              onRetryNeeded();
+            } else {
+              console.log(`Retrying... (${retryCountRef.current}/${maxRetries})`);
+              toast({
+                title: "Tentando novamente",
+                description: `Tentativa ${retryCountRef.current} de ${maxRetries}`,
+                variant: "default"
+              });
+            }
+          }
+        }
       }
     } catch (error) {
       console.error('Erro ao verificar status da conexão:', error);

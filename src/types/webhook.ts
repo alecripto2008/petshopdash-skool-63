@@ -21,6 +21,11 @@ export const WEBHOOK_IDENTIFIERS = {
   ALTERA_EVENTO: 'altera_evento',
   EXCLUI_EVENTO: 'exclui_evento',
   
+  // Evolution
+  CREATE_EVOLUTION_INSTANCE: 'create_evolution_instance',
+  UPDATE_EVOLUTION_QR: 'update_evolution_qr',
+  CONFIRM_EVOLUTION_STATUS: 'confirm_evolution_status',
+  
   // RAG Documentos
   INSERIR_DADOS_RAG_DOCS: 'inserir_dados_rag_documentos',
   DELETAR_ARQUIVO_RAG_DOCS: 'deletar_arquivo_rag_documentos',

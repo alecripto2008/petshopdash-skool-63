@@ -2,6 +2,7 @@
 import { useState, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getWebhookUrl } from '@/services/webhookService';
+import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 
 export const useEvolution = () => {
   const [instanceName, setInstanceName] = useState('');
@@ -16,7 +17,7 @@ export const useEvolution = () => {
   const checkConnectionStatus = async () => {
     try {
       console.log('Checking connection status for:', instanceName);
-      const webhookUrl = await getWebhookUrl('confirm_evolution_status');
+      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.CONFIRM_EVOLUTION_STATUS);
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
@@ -105,7 +106,7 @@ export const useEvolution = () => {
     try {
       setIsLoading(true);
       console.log('Updating QR code for instance:', instanceName);
-      const webhookUrl = await getWebhookUrl('update_evolution_qr');
+      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.UPDATE_EVOLUTION_QR);
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
@@ -171,7 +172,7 @@ export const useEvolution = () => {
     
     try {
       console.log('Creating instance with name:', instanceName);
-      const webhookUrl = await getWebhookUrl('create_evolution_instance');
+      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.CREATE_EVOLUTION_INSTANCE);
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
