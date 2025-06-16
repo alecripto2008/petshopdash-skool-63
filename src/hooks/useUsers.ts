@@ -249,47 +249,54 @@ export const useUsers = () => {
     mutationFn: async (userId: string) => {
       console.log('🗑️ Physically deleting user:', userId);
       
-      // Primeiro, remover todas as roles
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId);
+      try {
+        // Primeiro, remover todas as roles do usuário
+        console.log('📋 Deleting user roles...');
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', userId);
 
-      if (roleError) {
-        console.error('❌ Error deleting roles:', roleError);
-        throw new Error(`Erro ao remover roles: ${roleError.message}`);
+        if (roleError) {
+          console.error('❌ Error deleting roles:', roleError);
+          throw new Error(`Erro ao remover permissões: ${roleError.message}`);
+        }
+        console.log('✅ User roles deleted successfully');
+
+        // Depois, deletar fisicamente o perfil do usuário
+        console.log('👤 Deleting user profile...');
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', userId);
+
+        if (profileError) {
+          console.error('❌ Error deleting user profile:', profileError);
+          throw new Error(`Erro ao deletar perfil do usuário: ${profileError.message}`);
+        }
+        console.log('✅ User profile deleted successfully');
+
+        console.log('🎉 User completely deleted from system');
+        return userId;
+
+      } catch (error) {
+        console.error('💥 Error in deleteUser operation:', error);
+        throw error;
       }
-
-      // Depois, deletar fisicamente o perfil
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
-
-      if (profileError) {
-        console.error('❌ Error deleting user profile:', profileError);
-        throw new Error(`Erro ao deletar usuário: ${profileError.message}`);
-      }
-
-      // Por fim, deletar o usuário do auth (se necessário)
-      // Nota: Isso pode não ser possível via client, dependendo das permissões
-      // O perfil já foi deletado, que é o principal
-
-      console.log('✅ User physically deleted successfully');
-      return userId;
     },
     onSuccess: () => {
+      console.log('✅ User deletion successful, refreshing data...');
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast({
-        title: "Usuário removido",
-        description: "Usuário deletado permanentemente com sucesso!",
+        title: "Usuário excluído",
+        description: "Usuário e todos os seus dados foram removidos permanentemente!",
       });
     },
     onError: (error: any) => {
-      console.error('❌ Delete error:', error);
+      console.error('❌ Delete mutation error:', error);
       toast({
-        title: "Erro",
-        description: error.message || "Erro ao deletar usuário",
+        title: "Erro na exclusão",
+        description: error.message || "Erro ao deletar usuário permanentemente",
         variant: "destructive",
       });
     },
