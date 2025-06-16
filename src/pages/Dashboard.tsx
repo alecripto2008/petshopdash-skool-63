@@ -16,7 +16,6 @@ import PaymentsCard from '@/components/dashboard/PaymentsCard';
 import UsersCard from '@/components/dashboard/UsersCard';
 import { ConfigCard } from '@/components/dashboard/ConfigCard';
 import { TokenCostCard } from '@/components/dashboard/TokenCostCard';
-import UserDebugInfo from '@/components/debug/UserDebugInfo';
 
 const Dashboard = () => {
   const { user, isLoading } = useAuth();
@@ -48,9 +47,6 @@ const Dashboard = () => {
         <h2 className="text-2xl font-bold text-center mb-10 text-gray-800 dark:text-gray-100 transition-colors duration-300">
           Painel Administrativo
         </h2>
-        
-        {/* Componente de Debug - Remover após verificação */}
-        <UserDebugInfo />
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {permissions.canAccessMetrics && <MetricsCard />}
