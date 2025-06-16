@@ -60,94 +60,106 @@ export const useUsers = () => {
     mutationFn: async (userData: { name: string; email: string; password: string; phone?: string; role: string }) => {
       console.log('🚀 Starting user creation process...', userData);
       
-      try {
-        // Step 1: Check if email already exists
-        console.log('📧 Checking if email already exists...');
-        const { data: existingUser } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('email', userData.email)
-          .maybeSingle();
+      // Verificar se o email já existe
+      console.log('📧 Checking if email already exists...');
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('email', userData.email)
+        .maybeSingle();
 
-        if (existingUser) {
-          console.log('❌ Email already exists:', userData.email);
-          throw new Error('Este email já está sendo usado por outro usuário');
-        }
+      if (existingUser) {
+        console.log('❌ Email already exists:', userData.email);
+        throw new Error('Este email já está sendo usado por outro usuário');
+      }
 
-        console.log('✅ Email is available');
+      console.log('✅ Email is available');
 
-        // Step 2: Create user using normal signup
-        console.log('🔐 Creating auth user via signup...');
-        const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Criar o usuário com signup simples
+      console.log('🔐 Creating user with signup...');
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+      });
+
+      if (authError) {
+        console.error('❌ Auth signup error:', authError);
+        throw new Error(`Erro na criação do usuário: ${authError.message}`);
+      }
+
+      if (!authData.user) {
+        console.error('❌ No user returned from signup');
+        throw new Error('Usuário não foi criado');
+      }
+
+      const userId = authData.user.id;
+      console.log('✅ Auth user created successfully:', userId);
+
+      // Criar perfil manualmente (não confiar apenas no trigger)
+      console.log('👤 Creating profile manually...');
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          name: userData.name,
           email: userData.email,
-          password: userData.password,
-          options: {
-            data: {
-              name: userData.name,
-              phone: userData.phone || null,
-            }
-          }
+          phone: userData.phone || null,
+          active: true
+        })
+        .select()
+        .single();
+
+      if (profileError) {
+        console.error('❌ Profile creation error:', profileError);
+        // Se falhou, tentar fazer update caso o trigger tenha criado
+        const { data: updatedProfile, error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            name: userData.name,
+            phone: userData.phone || null,
+          })
+          .eq('id', userId)
+          .select()
+          .single();
+
+        if (updateError) {
+          console.error('❌ Profile update also failed:', updateError);
+          throw new Error(`Erro ao criar/atualizar perfil: ${updateError.message}`);
+        }
+        console.log('✅ Profile updated successfully:', updatedProfile);
+      } else {
+        console.log('✅ Profile created successfully:', profileData);
+      }
+
+      // Atribuir role
+      console.log('🔐 Assigning role:', userData.role);
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: userData.role as UserRole,
+          assigned_by: null
         });
 
-        if (authError) {
-          console.error('❌ Auth signup error:', authError);
-          throw new Error(`Erro na criação do usuário: ${authError.message}`);
-        }
-
-        if (!authData.user) {
-          console.error('❌ No user returned from auth signup');
-          throw new Error('Usuário não foi criado - nenhum dado retornado');
-        }
-
-        console.log('✅ Auth user created successfully:', authData.user.id);
-
-        // Step 3: Create profile directly (trigger should handle this, but let's be explicit)
-        console.log('👤 Creating/updating profile...');
-        const { data: createdProfile, error: profileError } = await supabase
-          .from('profiles')
-          .upsert({
-            id: authData.user.id,
-            name: userData.name,
-            email: userData.email,
-            phone: userData.phone || null,
-            active: true
-          })
-          .select()
-          .single();
-
-        if (profileError) {
-          console.error('❌ Profile creation error:', profileError);
-          throw new Error(`Erro ao criar perfil: ${profileError.message}`);
-        }
-
-        console.log('✅ Profile created/updated successfully:', createdProfile);
-
-        // Step 4: Assign role
-        console.log('🔐 Assigning role:', userData.role, 'to user:', authData.user.id);
-        const { data: roleData, error: roleError } = await supabase
+      if (roleError) {
+        console.error('❌ Role assignment error:', roleError);
+        // Tentar atualizar se já existe
+        const { error: roleUpdateError } = await supabase
           .from('user_roles')
-          .upsert({
-            user_id: authData.user.id,
-            role: userData.role as UserRole,
-            assigned_by: null
-          })
-          .select()
-          .single();
+          .update({ role: userData.role as UserRole })
+          .eq('user_id', userId);
 
-        if (roleError) {
-          console.error('❌ Role assignment error:', roleError);
-          throw new Error(`Erro ao atribuir permissão: ${roleError.message}`);
+        if (roleUpdateError) {
+          console.error('❌ Role update also failed:', roleUpdateError);
+          throw new Error(`Erro ao atribuir permissão: ${roleUpdateError.message}`);
         }
-
-        console.log('✅ Role assigned successfully:', roleData);
-        console.log('🎉 User creation process completed successfully!');
-        
-        return authData.user;
-
-      } catch (error) {
-        console.error('💥 Error in user creation process:', error);
-        throw error;
+        console.log('✅ Role updated successfully');
+      } else {
+        console.log('✅ Role assigned successfully');
       }
+
+      console.log('🎉 User creation process completed successfully!');
+      return authData.user;
     },
     onSuccess: () => {
       console.log('✅ Mutation success callback triggered');
