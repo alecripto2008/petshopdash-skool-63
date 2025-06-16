@@ -27,11 +27,15 @@ export async function loadWebhooks(): Promise<Record<string, string>> {
       const webhooks = data as WebhookConfig[];
       console.log("Loaded webhooks from Supabase:", webhooks);
       webhooks.forEach(webhook => {
+        console.log(`Processing webhook: ${webhook.name}, identifier: ${webhook.identifier}, url: ${webhook.url}`);
         if (webhook.identifier) {
           webhookMap[webhook.identifier] = webhook.url;
+          console.log(`Added to cache by identifier: ${webhook.identifier} -> ${webhook.url}`);
         }
         // Também adiciona por nome para compatibilidade
-        webhookMap[webhook.name.toLowerCase().replace(/\s+/g, '_')] = webhook.url;
+        const nameKey = webhook.name.toLowerCase().replace(/\s+/g, '_');
+        webhookMap[nameKey] = webhook.url;
+        console.log(`Added to cache by name: ${nameKey} -> ${webhook.url}`);
       });
     }
   } catch (dbError) {
@@ -54,6 +58,8 @@ export async function getWebhookUrl(identifier: string): Promise<string> {
     console.log("Cache not loaded, loading webhooks...");
     await loadWebhooks();
   }
+
+  console.log("Current webhook cache:", webhookCache);
 
   // Primeiro tenta pelo identificador
   let url = webhookCache?.[identifier];

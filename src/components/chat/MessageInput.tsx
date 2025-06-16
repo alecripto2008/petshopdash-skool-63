@@ -26,13 +26,22 @@ const MessageInput = ({ selectedChat, selectedConversation }: MessageInputProps)
       setIsSending(true);
       
       console.log('Getting webhook URL for sending message...');
+      console.log('Looking for identifier:', WEBHOOK_IDENTIFIERS.ENVIAR_MENSAGEM);
       const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.ENVIAR_MENSAGEM);
       
+      console.log('Webhook URL found:', webhookUrl);
+      
       if (!webhookUrl) {
+        console.error('Webhook URL is empty or null');
         throw new Error('Webhook de envio de mensagem não configurado');
       }
       
       console.log('Sending message to webhook:', webhookUrl);
+      console.log('Message data:', {
+        message: newMessage,
+        phoneNumber: selectedConversation.phone,
+      });
+      
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
@@ -44,7 +53,12 @@ const MessageInput = ({ selectedChat, selectedConversation }: MessageInputProps)
         }),
       });
       
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+      
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
         throw new Error('Falha ao enviar mensagem');
       }
       
