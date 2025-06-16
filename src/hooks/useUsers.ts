@@ -58,7 +58,7 @@ export const useUsers = () => {
 
   const addUserMutation = useMutation({
     mutationFn: async (userData: { name: string; email: string; password: string; phone?: string; role: string }) => {
-      console.log('🚀 Starting simplified user creation process...', userData);
+      console.log('🚀 Starting user creation process...', userData);
       
       try {
         // Step 1: Check if email already exists
@@ -76,35 +76,36 @@ export const useUsers = () => {
 
         console.log('✅ Email is available');
 
-        // Step 2: Create user in auth with admin service role key
-        console.log('🔐 Creating auth user with admin privileges...');
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        // Step 2: Create user using normal signup
+        console.log('🔐 Creating auth user via signup...');
+        const { data: authData, error: authError } = await supabase.auth.signUp({
           email: userData.email,
           password: userData.password,
-          email_confirm: true, // Auto-confirm email
-          user_metadata: {
-            name: userData.name,
-            phone: userData.phone || null,
+          options: {
+            data: {
+              name: userData.name,
+              phone: userData.phone || null,
+            }
           }
         });
 
         if (authError) {
-          console.error('❌ Auth admin create error:', authError);
+          console.error('❌ Auth signup error:', authError);
           throw new Error(`Erro na criação do usuário: ${authError.message}`);
         }
 
         if (!authData.user) {
-          console.error('❌ No user returned from auth admin create');
+          console.error('❌ No user returned from auth signup');
           throw new Error('Usuário não foi criado - nenhum dado retornado');
         }
 
-        console.log('✅ Auth user created successfully with admin:', authData.user.id);
+        console.log('✅ Auth user created successfully:', authData.user.id);
 
-        // Step 3: Create profile directly
-        console.log('👤 Creating profile directly...');
+        // Step 3: Create profile directly (trigger should handle this, but let's be explicit)
+        console.log('👤 Creating/updating profile...');
         const { data: createdProfile, error: profileError } = await supabase
           .from('profiles')
-          .insert({
+          .upsert({
             id: authData.user.id,
             name: userData.name,
             email: userData.email,
@@ -116,18 +117,16 @@ export const useUsers = () => {
 
         if (profileError) {
           console.error('❌ Profile creation error:', profileError);
-          // Try to clean up the auth user if profile creation fails
-          await supabase.auth.admin.deleteUser(authData.user.id);
           throw new Error(`Erro ao criar perfil: ${profileError.message}`);
         }
 
-        console.log('✅ Profile created successfully:', createdProfile);
+        console.log('✅ Profile created/updated successfully:', createdProfile);
 
         // Step 4: Assign role
         console.log('🔐 Assigning role:', userData.role, 'to user:', authData.user.id);
         const { data: roleData, error: roleError } = await supabase
           .from('user_roles')
-          .insert({
+          .upsert({
             user_id: authData.user.id,
             role: userData.role as UserRole,
             assigned_by: null
@@ -137,9 +136,6 @@ export const useUsers = () => {
 
         if (roleError) {
           console.error('❌ Role assignment error:', roleError);
-          // Clean up on role assignment failure
-          await supabase.from('profiles').delete().eq('id', authData.user.id);
-          await supabase.auth.admin.deleteUser(authData.user.id);
           throw new Error(`Erro ao atribuir permissão: ${roleError.message}`);
         }
 
