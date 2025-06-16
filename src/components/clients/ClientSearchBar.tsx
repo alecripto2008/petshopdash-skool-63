@@ -1,44 +1,65 @@
 
 import React from 'react';
-import { Search, RefreshCw } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { RefreshCw, Search, UserPlus } from 'lucide-react';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
 
 interface ClientSearchBarProps {
   searchTerm: string;
   onSearchTermChange: (term: string) => void;
   onRefresh: () => void;
-  isRefreshing: boolean;
-  isLoading: boolean;
+  onAddClient?: () => void;
+  isRefreshing?: boolean;
+  isLoading?: boolean;
 }
 
-const ClientSearchBar = ({ 
-  searchTerm, 
-  onSearchTermChange, 
-  onRefresh, 
-  isRefreshing, 
-  isLoading 
-}: ClientSearchBarProps) => {
+const ClientSearchBar: React.FC<ClientSearchBarProps> = ({
+  searchTerm,
+  onSearchTermChange,
+  onRefresh,
+  onAddClient,
+  isRefreshing = false,
+  isLoading = false
+}) => {
+  const { permissions, loading: permissionsLoading } = useUserPermissions();
+  const canModifyClients = permissions.role !== 'viewer';
+
   return (
-    <div className="flex flex-col sm:flex-row gap-3">
-      <div className="relative">
-        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500 dark:text-gray-400" />
-        <Input 
-          placeholder="Pesquisar clientes..." 
-          className="pl-10 w-full sm:w-64"
+    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+      <div className="relative flex-1 sm:w-64">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Input
+          placeholder="Buscar clientes..."
           value={searchTerm}
           onChange={(e) => onSearchTermChange(e.target.value)}
+          className="pl-10"
         />
       </div>
-      <Button 
-        variant="refresh" 
-        onClick={onRefresh} 
-        disabled={isRefreshing || isLoading}
-        className="min-w-[40px]"
-      >
-        <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-        Atualizar
-      </Button>
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onRefresh}
+          disabled={isRefreshing || isLoading}
+          className="whitespace-nowrap"
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+          {isRefreshing ? 'Atualizando...' : 'Atualizar'}
+        </Button>
+        {onAddClient && (
+          <Button 
+            size="sm" 
+            onClick={onAddClient}
+            disabled={!canModifyClients || permissionsLoading}
+            title={!canModifyClients ? "Você não tem permissão para adicionar clientes" : ""}
+            className="whitespace-nowrap"
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Adicionar Cliente
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

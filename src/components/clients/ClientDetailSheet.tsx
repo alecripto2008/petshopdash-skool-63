@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Sheet,
@@ -13,6 +12,7 @@ import { User, Phone, Mail, MapPin, MessageSquare, CreditCard, FileText, Dog, Tr
 import { Contact } from '@/types/client';
 import DeleteClientDialog from './DeleteClientDialog';
 import SendMessageDialog from './SendMessageDialog';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
 
 interface ClientDetailSheetProps {
   isOpen: boolean;
@@ -53,6 +53,9 @@ const ClientDetailSheet = ({
   setIsPauseDurationDialogOpen,
   handlePauseDurationConfirm
 }: ClientDetailSheetProps) => {
+  const { permissions, loading: permissionsLoading } = useUserPermissions();
+  const canModifyClients = permissions.role !== 'viewer';
+
   if (!selectedContact) return null;
 
   return (
@@ -141,36 +144,62 @@ const ClientDetailSheet = ({
           
           <div className="pt-4 border-t dark:border-gray-700">
             <div className="flex flex-wrap gap-2 justify-end">
-              <DeleteClientDialog 
-                isOpen={isDeleteDialogOpen}
-                onOpenChange={setIsDeleteDialogOpen}
-                selectedContact={selectedContact}
-                handleDeleteContact={handleDeleteContact}
-              />
-              
-              <Dialog open={isMessageDialogOpen} onOpenChange={setIsMessageDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" onClick={onSendMessageClick}>
+              {canModifyClients ? (
+                <>
+                  <DeleteClientDialog 
+                    isOpen={isDeleteDialogOpen}
+                    onOpenChange={setIsDeleteDialogOpen}
+                    selectedContact={selectedContact}
+                    handleDeleteContact={handleDeleteContact}
+                  />
+                  
+                  <Dialog open={isMessageDialogOpen} onOpenChange={setIsMessageDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" onClick={onSendMessageClick}>
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Mensagem
+                      </Button>
+                    </DialogTrigger>
+                    <SendMessageDialog 
+                      selectedContact={selectedContact}
+                      messageText={messageText}
+                      setMessageText={setMessageText}
+                      handleMessageSubmit={handleMessageSubmit}
+                      onOpenChange={setIsMessageDialogOpen}
+                      isPauseDurationDialogOpen={isPauseDurationDialogOpen}
+                      setIsPauseDurationDialogOpen={setIsPauseDurationDialogOpen}
+                      handlePauseDurationConfirm={handlePauseDurationConfirm}
+                    />
+                  </Dialog>
+                  
+                  <Button variant="outline" size="sm" onClick={onEditClick}>
+                    <Edit2 className="mr-2 h-4 w-4" />
+                    Editar
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    disabled
+                    title="Você não tem permissão para enviar mensagens"
+                  >
                     <MessageSquare className="mr-2 h-4 w-4" />
                     Mensagem
                   </Button>
-                </DialogTrigger>
-                <SendMessageDialog 
-                  selectedContact={selectedContact}
-                  messageText={messageText}
-                  setMessageText={setMessageText}
-                  handleMessageSubmit={handleMessageSubmit}
-                  onOpenChange={setIsMessageDialogOpen}
-                  isPauseDurationDialogOpen={isPauseDurationDialogOpen}
-                  setIsPauseDurationDialogOpen={setIsPauseDurationDialogOpen}
-                  handlePauseDurationConfirm={handlePauseDurationConfirm}
-                />
-              </Dialog>
-              
-              <Button variant="outline" size="sm" onClick={onEditClick}>
-                <Edit2 className="mr-2 h-4 w-4" />
-                Editar
-              </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    disabled
+                    title="Você não tem permissão para editar clientes"
+                  >
+                    <Edit2 className="mr-2 h-4 w-4" />
+                    Editar
+                  </Button>
+                </>
+              )}
               
               <Button variant="default" size="sm">
                 <Phone className="mr-2 h-4 w-4" />

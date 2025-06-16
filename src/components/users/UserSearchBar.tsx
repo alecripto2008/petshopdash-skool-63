@@ -1,44 +1,65 @@
 
 import React from 'react';
-import { Search, RefreshCw } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { RefreshCw, Search, UserPlus } from 'lucide-react';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
 
 interface UserSearchBarProps {
   searchTerm: string;
   onSearchTermChange: (term: string) => void;
   onRefresh: () => void;
-  isRefreshing: boolean;
-  isLoading: boolean;
+  onAddUser?: () => void;
+  isRefreshing?: boolean;
+  isLoading?: boolean;
 }
 
-const UserSearchBar = ({ 
-  searchTerm, 
-  onSearchTermChange, 
-  onRefresh, 
-  isRefreshing, 
-  isLoading 
-}: UserSearchBarProps) => {
+const UserSearchBar: React.FC<UserSearchBarProps> = ({
+  searchTerm,
+  onSearchTermChange,
+  onRefresh,
+  onAddUser,
+  isRefreshing = false,
+  isLoading = false
+}) => {
+  const { permissions, loading: permissionsLoading } = useUserPermissions();
+  const canModifyUsers = permissions.canAccessUsers && permissions.role !== 'viewer';
+
   return (
-    <div className="flex flex-col sm:flex-row gap-3">
-      <div className="relative">
-        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500 dark:text-gray-400" />
-        <Input 
-          placeholder="Pesquisar usuários..." 
-          className="pl-10 w-full sm:w-64"
+    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+      <div className="relative flex-1 sm:w-64">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Input
+          placeholder="Buscar usuários..."
           value={searchTerm}
           onChange={(e) => onSearchTermChange(e.target.value)}
+          className="pl-10"
         />
       </div>
-      <Button 
-        variant="outline" 
-        onClick={onRefresh} 
-        disabled={isRefreshing || isLoading}
-        className="min-w-[40px]"
-      >
-        <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-        Atualizar
-      </Button>
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onRefresh}
+          disabled={isRefreshing || isLoading}
+          className="whitespace-nowrap"
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+          {isRefreshing ? 'Atualizando...' : 'Atualizar'}
+        </Button>
+        {onAddUser && (
+          <Button 
+            size="sm" 
+            onClick={onAddUser}
+            disabled={!canModifyUsers || permissionsLoading}
+            title={!canModifyUsers ? "Você não tem permissão para adicionar usuários" : ""}
+            className="whitespace-nowrap"
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Adicionar Usuário
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

@@ -14,6 +14,7 @@ import { Edit2, Trash2 } from 'lucide-react';
 import { UserProfile } from '@/hooks/useUsers';
 import { EditUserDialog } from './EditUserDialog';
 import { DeleteUserDialog } from './DeleteUserDialog';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
 
 interface UsersTableProps {
   users: UserProfile[];
@@ -34,6 +35,9 @@ export const UsersTable: React.FC<UsersTableProps> = ({
   isUpdatingRole,
   isDeletingUser,
 }) => {
+  const { permissions, loading: permissionsLoading } = useUserPermissions();
+  const canModifyUsers = permissions.canAccessUsers && permissions.role !== 'viewer';
+  
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [deletingUser, setDeletingUser] = useState<UserProfile | null>(null);
 
@@ -111,6 +115,8 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                       variant="outline"
                       size="sm"
                       onClick={() => setEditingUser(user)}
+                      disabled={!canModifyUsers || permissionsLoading}
+                      title={!canModifyUsers ? "Você não tem permissão para editar usuários" : ""}
                     >
                       <Edit2 className="h-4 w-4" />
                     </Button>
@@ -118,6 +124,8 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                       variant="outline"
                       size="sm"
                       onClick={() => setDeletingUser(user)}
+                      disabled={!canModifyUsers || permissionsLoading}
+                      title={!canModifyUsers ? "Você não tem permissão para excluir usuários" : ""}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

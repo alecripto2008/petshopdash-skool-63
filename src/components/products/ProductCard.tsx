@@ -28,9 +28,10 @@ interface Product {
 interface ProductCardProps {
   product: Product;
   onDelete: (id: number, title: string) => void;
+  canDelete: boolean;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, onDelete }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, onDelete, canDelete }) => {
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-2">
@@ -48,35 +49,48 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onDelete }) => {
         </div>
       </CardContent>
       <CardFooter className="flex justify-end">
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-red-500 hover:text-red-600"
-            >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Excluir
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Excluir Produto</DialogTitle>
-              <DialogDescription>
-                Esta ação não pode ser desfeita. Tem certeza que deseja excluir o produto?
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline">Cancelar</Button>
+        {canDelete ? (
+          <Dialog>
+            <DialogTrigger asChild>
               <Button 
-                variant="destructive" 
-                onClick={() => onDelete(product.id, product.titulo)}
+                variant="outline" 
+                size="sm" 
+                className="text-red-500 hover:text-red-600"
               >
+                <Trash2 className="h-4 w-4 mr-1" />
                 Excluir
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Excluir Produto</DialogTitle>
+                <DialogDescription>
+                  Esta ação não pode ser desfeita. Tem certeza que deseja excluir o produto?
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant="outline">Cancelar</Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={() => onDelete(product.id, product.titulo)}
+                >
+                  Excluir
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        ) : (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            disabled
+            title="Você não tem permissão para excluir produtos"
+            className="text-gray-400"
+          >
+            <Trash2 className="h-4 w-4 mr-1" />
+            Excluir
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );
