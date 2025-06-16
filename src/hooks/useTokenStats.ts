@@ -28,7 +28,7 @@ export const useTokenStats = () => {
       
       const { data: dailyData, error: dailyError } = await supabase
         .from('tokens')
-        .select('totalcostreal')
+        .select('totalcostReal')
         .gte('created_at', startOfDay.toISOString())
         .lt('created_at', endOfDay.toISOString());
 
@@ -36,7 +36,7 @@ export const useTokenStats = () => {
         console.error('Error fetching daily token costs:', dailyError);
       }
 
-      const dailyTotal = dailyData?.reduce((sum, item) => sum + (Number(item.totalcostreal) || 0), 0) || 0;
+      const dailyTotal = dailyData?.reduce((sum, item) => sum + (Number(item.totalcostReal) || 0), 0) || 0;
 
       // Buscar dados mensais dos últimos 12 meses
       const monthsAgo = new Date();
@@ -44,7 +44,7 @@ export const useTokenStats = () => {
 
       const { data: monthlyData, error: monthlyError } = await supabase
         .from('tokens')
-        .select('totalcostreal, created_at')
+        .select('totalcostReal, created_at')
         .gte('created_at', monthsAgo.toISOString())
         .order('created_at', { ascending: true });
 
@@ -59,7 +59,7 @@ export const useTokenStats = () => {
       monthlyData?.forEach(item => {
         const date = new Date(item.created_at);
         const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-        const cost = Number(item.totalcostreal) || 0;
+        const cost = Number(item.totalcostReal) || 0;
         
         if (!monthlyGroups[monthKey]) {
           monthlyGroups[monthKey] = 0;
