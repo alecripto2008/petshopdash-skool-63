@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -62,14 +63,15 @@ export const useUsers = () => {
       
       try {
         // Criar usuário no auth - o trigger handle_new_user() criará o perfil automaticamente
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        const { data: authData, error: authError } = await supabase.auth.signUp({
           email: userData.email,
           password: userData.password,
-          user_metadata: {
-            name: userData.name,
-            phone: userData.phone || null,
-          },
-          email_confirm: true // Confirma o email automaticamente
+          options: {
+            data: {
+              name: userData.name,
+              phone: userData.phone || null,
+            }
+          }
         });
 
         if (authError) {
@@ -85,6 +87,35 @@ export const useUsers = () => {
 
         // Aguardar um pouco para o trigger processar
         await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Verificar se o perfil foi criado pelo trigger
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', authData.user.id)
+          .single();
+
+        if (profileError || !profile) {
+          console.log('⚠️ Profile not found, creating manually...');
+          // Criar perfil manualmente se o trigger não funcionou
+          const { error: createProfileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: authData.user.id,
+              name: userData.name,
+              email: userData.email,
+              phone: userData.phone || null,
+              active: true
+            });
+
+          if (createProfileError) {
+            console.error('❌ Error creating profile:', createProfileError);
+            throw new Error(`Erro ao criar perfil: ${createProfileError.message}`);
+          }
+          console.log('✅ Profile created manually');
+        } else {
+          console.log('✅ Profile found from trigger');
+        }
 
         // Atribuir role
         console.log('🔐 Assigning role:', userData.role);
