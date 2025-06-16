@@ -382,7 +382,7 @@ export type Database = {
           momentdolar: number | null
           prompt_tokens: number | null
           totalcost: number | null
-          totalcostReal: number | null
+          totalcostreal: number | null
           workflow: string | null
         }
         Insert: {
@@ -397,7 +397,7 @@ export type Database = {
           momentdolar?: number | null
           prompt_tokens?: number | null
           totalcost?: number | null
-          totalcostReal?: number | null
+          totalcostreal?: number | null
           workflow?: string | null
         }
         Update: {
@@ -412,7 +412,7 @@ export type Database = {
           momentdolar?: number | null
           prompt_tokens?: number | null
           totalcost?: number | null
-          totalcostReal?: number | null
+          totalcostreal?: number | null
           workflow?: string | null
         }
         Relationships: []

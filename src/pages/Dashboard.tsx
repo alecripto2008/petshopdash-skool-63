@@ -14,6 +14,7 @@ import ProductsCard from '@/components/dashboard/ProductsCard';
 import PaymentsCard from '@/components/dashboard/PaymentsCard';
 import UsersCard from '@/components/dashboard/UsersCard';
 import { ConfigCard } from '@/components/dashboard/ConfigCard';
+import { TokenCostCard } from '@/components/dashboard/TokenCostCard';
 
 const Dashboard = () => {
   const { user, isLoading } = useAuth();
@@ -55,6 +56,7 @@ const Dashboard = () => {
           <ProductsCard />
           <PaymentsCard />
           <UsersCard />
+          <TokenCostCard />
           <ConfigCard />
         </div>
       </main>
