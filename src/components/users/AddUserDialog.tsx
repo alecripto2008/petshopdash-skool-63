@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
 
 interface AddUserFormData {
   name: string;
@@ -46,6 +47,9 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
   onSave,
   isLoading,
 }) => {
+  const { permissions } = useUserPermissions();
+  const isManager = permissions.role === 'manager';
+  
   const form = useForm<AddUserFormData>({
     defaultValues: {
       name: '',
@@ -157,15 +161,25 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="user">Usuário</SelectItem>
-                      <SelectItem value="manager">Gerente</SelectItem>
-                      <SelectItem value="admin">Administrador</SelectItem>
                       <SelectItem value="viewer">Visualizador</SelectItem>
+                      {!isManager && (
+                        <>
+                          <SelectItem value="manager">Gerente</SelectItem>
+                          <SelectItem value="admin">Administrador</SelectItem>
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {isManager && (
+              <div className="bg-amber-50 border border-amber-200 p-3 rounded-md text-sm text-amber-800">
+                <strong>Atenção:</strong> Como gerente, você só pode criar usuários com permissões "Usuário" ou "Visualizador".
+              </div>
+            )}
 
             <div className="flex justify-end gap-2">
               <Button

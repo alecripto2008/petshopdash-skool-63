@@ -37,6 +37,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
 }) => {
   const { permissions, loading: permissionsLoading } = useUserPermissions();
   const canModifyUsers = permissions.canAccessUsers && permissions.role !== 'viewer';
+  const isManager = permissions.role === 'manager';
   
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [deletingUser, setDeletingUser] = useState<UserProfile | null>(null);
@@ -69,6 +70,14 @@ export const UsersTable: React.FC<UsersTableProps> = ({
       default:
         return role;
     }
+  };
+
+  const canManageUser = (user: UserProfile) => {
+    if (!canModifyUsers) return false;
+    if (!isManager) return true; // Admin pode gerenciar todos
+    
+    const userRole = user.roles[0];
+    return userRole === 'user' || userRole === 'viewer';
   };
 
   return (
@@ -115,8 +124,14 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                       variant="outline"
                       size="sm"
                       onClick={() => setEditingUser(user)}
-                      disabled={!canModifyUsers || permissionsLoading}
-                      title={!canModifyUsers ? "Você não tem permissão para editar usuários" : ""}
+                      disabled={!canManageUser(user) || permissionsLoading}
+                      title={
+                        !canModifyUsers 
+                          ? "Você não tem permissão para editar usuários" 
+                          : !canManageUser(user)
+                          ? "Como gerente, você só pode editar usuários e visualizadores"
+                          : ""
+                      }
                     >
                       <Edit2 className="h-4 w-4" />
                     </Button>
@@ -124,8 +139,14 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                       variant="outline"
                       size="sm"
                       onClick={() => setDeletingUser(user)}
-                      disabled={!canModifyUsers || permissionsLoading}
-                      title={!canModifyUsers ? "Você não tem permissão para excluir usuários" : ""}
+                      disabled={!canManageUser(user) || permissionsLoading}
+                      title={
+                        !canModifyUsers 
+                          ? "Você não tem permissão para excluir usuários" 
+                          : !canManageUser(user)
+                          ? "Como gerente, você só pode excluir usuários e visualizadores"
+                          : ""
+                      }
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

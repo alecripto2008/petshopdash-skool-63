@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { UserProfile } from '@/hooks/useUsers';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
 
 interface EditUserFormData {
   name: string;
@@ -53,6 +54,9 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
   isLoading,
   isUpdatingRole,
 }) => {
+  const { permissions } = useUserPermissions();
+  const isManager = permissions.role === 'manager';
+  
   const form = useForm<EditUserFormData>({
     defaultValues: {
       name: '',
@@ -72,6 +76,14 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
       });
     }
   }, [user, form]);
+
+  // Verificar se o gerente pode editar este usuário
+  const canEditUser = React.useMemo(() => {
+    if (!user || !isManager) return true; // Admin pode editar todos
+    
+    const userRole = user.roles[0];
+    return userRole === 'user' || userRole === 'viewer';
+  }, [user, isManager]);
 
   const handleSubmit = async (data: EditUserFormData) => {
     if (!user) return;
@@ -97,6 +109,29 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
   };
 
   const isProcessing = isLoading || isUpdatingRole;
+
+  if (!canEditUser) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Acesso Negado</DialogTitle>
+          </DialogHeader>
+          <div className="text-center py-6">
+            <p className="text-red-600 mb-4">
+              Como gerente, você não tem permissão para editar usuários com role "{user?.roles[0]}".
+            </p>
+            <p className="text-gray-600 text-sm">
+              Você só pode gerenciar usuários com roles "Usuário" ou "Visualizador".
+            </p>
+            <Button className="mt-4" onClick={() => onOpenChange(false)}>
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -150,10 +185,14 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="viewer">Visualizador</SelectItem>
                       <SelectItem value="user">Usuário</SelectItem>
-                      <SelectItem value="manager">Gerente</SelectItem>
-                      <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="viewer">Visualizador</SelectItem>
+                      {!isManager && (
+                        <>
+                          <SelectItem value="manager">Gerente</SelectItem>
+                          <SelectItem value="admin">Administrador</SelectItem>
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -182,15 +221,11 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
               )}
             />
 
-            <div className="bg-muted p-3 rounded-md text-sm">
-              <strong>Descrição das permissões:</strong>
-              <ul className="mt-1 space-y-1">
-                <li><strong>Visualizador:</strong> Apenas visualização</li>
-                <li><strong>Usuário:</strong> Acesso básico</li>
-                <li><strong>Gerente:</strong> Acesso intermediário</li>
-                <li><strong>Administrador:</strong> Acesso total</li>
-              </ul>
-            </div>
+            {isManager && (
+              <div className="bg-amber-50 border border-amber-200 p-3 rounded-md text-sm text-amber-800">
+                <strong>Atenção:</strong> Como gerente, você só pode alterar permissões para "Usuário" ou "Visualizador".
+              </div>
+            )}
 
             <div className="flex justify-end gap-2">
               <Button
