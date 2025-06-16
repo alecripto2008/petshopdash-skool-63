@@ -18,6 +18,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { user, isLoading: authLoading } = useAuth();
   const { permissions, loading: permissionsLoading } = useUserPermissions();
 
+  // Mostrar loading enquanto autentica ou carrega permissões
   if (authLoading || permissionsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-petshop-blue dark:bg-gray-900">
@@ -26,10 +27,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
+  // Se não tem usuário, redireciona para login
   if (!user) {
     return <Navigate to="/" replace />;
   }
 
+  // Se tem uma permissão específica requerida e o usuário não tem essa permissão
   if (requiredPermission && !permissions[requiredPermission]) {
     return <Navigate to={fallbackPath} replace />;
   }
