@@ -25,7 +25,6 @@ export const useUsers = () => {
     queryFn: async () => {
       console.log('🔍 Fetching users...');
       
-      // Buscar perfis primeiro
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -38,19 +37,16 @@ export const useUsers = () => {
 
       console.log('✅ Profiles fetched:', profiles);
 
-      // Buscar roles separadamente
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id, role');
 
       if (rolesError) {
         console.error('❌ Error fetching roles:', rolesError);
-        console.warn('⚠️ Continuing without roles data');
       }
 
       console.log('📋 User roles fetched:', userRoles);
 
-      // Combinar os dados
       const usersWithRoles = profiles.map(profile => ({
         ...profile,
         roles: userRoles?.filter(ur => ur.user_id === profile.id).map(ur => ur.role) || []
@@ -63,54 +59,46 @@ export const useUsers = () => {
 
   const addUserMutation = useMutation({
     mutationFn: async (userData: { name: string; email: string; password: string; phone?: string; role: string }) => {
+      console.log('🚀 Starting user creation process...', userData);
+      
       try {
-        console.log('🔄 Starting user creation process...', userData);
-        console.log('🎯 ROLE SOLICITADA:', userData.role);
-        
-        // Criar usuário no auth
-        console.log('📝 Creating auth user with signUp...');
+        // Criar usuário no auth sem confirmação de email
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: userData.email,
           password: userData.password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
             data: {
               name: userData.name,
+              phone: userData.phone || null,
             }
           }
         });
 
         if (authError) {
           console.error('❌ Auth error:', authError);
-          throw new Error(`Erro de autenticação: ${authError.message}`);
+          throw new Error(`Erro na autenticação: ${authError.message}`);
         }
-
-        console.log('✅ Auth user created:', authData);
 
         if (!authData.user) {
-          throw new Error('Usuário não foi criado no sistema de autenticação');
+          throw new Error('Usuário não foi criado');
         }
 
-        // Aguardar um pouco para o trigger criar o perfil
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        console.log('✅ Auth user created:', authData.user.id);
 
-        // Verificar se o perfil foi criado pelo trigger
-        console.log('🔍 Checking if profile was created by trigger...');
-        const { data: profileCheck, error: profileCheckError } = await supabase
+        // Aguardar um pouco para o trigger processar
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Verificar se o perfil foi criado
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', authData.user.id)
-          .maybeSingle();
+          .single();
 
-        if (profileCheckError) {
-          console.error('❌ Error checking profile:', profileCheckError);
-          throw new Error(`Erro ao verificar perfil: ${profileCheckError.message}`);
-        }
-
-        if (!profileCheck) {
-          console.log('⚠️ Profile not created by trigger, creating manually...');
-          // Criar perfil manualmente se o trigger não funcionou
-          const { error: profileCreateError } = await supabase
+        if (profileError || !profile) {
+          console.log('⚠️ Profile not found, creating manually...');
+          // Criar perfil manualmente
+          const { error: createProfileError } = await supabase
             .from('profiles')
             .insert({
               id: authData.user.id,
@@ -120,57 +108,23 @@ export const useUsers = () => {
               active: true
             });
 
-          if (profileCreateError) {
-            console.error('❌ Profile creation error:', profileCreateError);
-            throw new Error(`Erro ao criar perfil: ${profileCreateError.message}`);
+          if (createProfileError) {
+            console.error('❌ Error creating profile:', createProfileError);
+            throw new Error(`Erro ao criar perfil: ${createProfileError.message}`);
           }
           console.log('✅ Profile created manually');
         } else {
-          console.log('✅ Profile found from trigger:', profileCheck);
-          
-          // Atualizar perfil com telefone se necessário
-          if (userData.phone && profileCheck.phone !== userData.phone) {
-            console.log('📞 Updating profile with phone...');
-            const { error: profileUpdateError } = await supabase
-              .from('profiles')
-              .update({ 
-                phone: userData.phone,
-                name: userData.name 
-              })
-              .eq('id', authData.user.id);
-
-            if (profileUpdateError) {
-              console.error('❌ Profile update error:', profileUpdateError);
-              throw new Error(`Erro ao atualizar perfil: ${profileUpdateError.message}`);
-            }
-            console.log('✅ Profile updated with phone');
-          }
+          console.log('✅ Profile found from trigger');
         }
 
-        // Remover qualquer role existente primeiro
-        console.log('🗑️ Removing existing roles...');
-        const { error: deleteRoleError } = await supabase
-          .from('user_roles')
-          .delete()
-          .eq('user_id', authData.user.id);
-
-        if (deleteRoleError) {
-          console.error('❌ Error deleting existing roles:', deleteRoleError);
-          // Continuar mesmo com erro, pois pode não existir role anterior
-        }
-
-        // Atribuir a nova role
+        // Atribuir role
         console.log('🔐 Assigning role:', userData.role);
-        
-        // Obter usuário atual para atribuir assigned_by
-        const { data: currentUser } = await supabase.auth.getUser();
-        
         const { error: roleError } = await supabase
           .from('user_roles')
           .insert({
             user_id: authData.user.id,
             role: userData.role as UserRole,
-            assigned_by: currentUser.user?.id || null
+            assigned_by: null
           });
 
         if (roleError) {
@@ -178,26 +132,16 @@ export const useUsers = () => {
           throw new Error(`Erro ao atribuir permissão: ${roleError.message}`);
         }
 
-        console.log('✅ Role assigned successfully:', userData.role);
-        
-        // Verificar se a role foi realmente atribuída
-        const { data: verifyRole } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', authData.user.id);
-        
-        console.log('🔍 VERIFICAÇÃO - Role no banco:', verifyRole);
-
-        console.log('🎉 User creation completed successfully');
+        console.log('✅ User created successfully with role:', userData.role);
         return authData.user;
 
       } catch (error) {
-        console.error('💥 Full error in mutation:', error);
+        console.error('💥 Error in user creation:', error);
         throw error;
       }
     },
     onSuccess: () => {
-      console.log('✅ Mutation successful, invalidating queries...');
+      console.log('✅ User creation successful, refreshing data...');
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast({
         title: "Usuário criado",
@@ -205,7 +149,7 @@ export const useUsers = () => {
       });
     },
     onError: (error: any) => {
-      console.error('❌ Mutation error:', error);
+      console.error('❌ User creation failed:', error);
       toast({
         title: "Erro",
         description: error.message || "Erro ao criar usuário",
@@ -234,6 +178,7 @@ export const useUsers = () => {
       }
       
       console.log('✅ User updated successfully');
+      return userData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -243,7 +188,7 @@ export const useUsers = () => {
       });
     },
     onError: (error: any) => {
-      console.error('❌ Update mutation error:', error);
+      console.error('❌ Update error:', error);
       toast({
         title: "Erro",
         description: error.message || "Erro ao atualizar usuário",
@@ -254,9 +199,9 @@ export const useUsers = () => {
 
   const updateUserRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      console.log('🔄 Updating user role to:', role);
+      console.log('🔄 Updating user role:', { userId, role });
       
-      // Remover roles existentes
+      // Primeiro, remover todas as roles existentes
       const { error: deleteError } = await supabase
         .from('user_roles')
         .delete()
@@ -264,37 +209,35 @@ export const useUsers = () => {
 
       if (deleteError) {
         console.error('❌ Error deleting existing roles:', deleteError);
-        throw new Error(`Erro ao remover roles existentes: ${deleteError.message}`);
+        throw new Error(`Erro ao remover roles: ${deleteError.message}`);
       }
 
-      // Obter usuário atual
-      const { data: currentUser } = await supabase.auth.getUser();
-
-      // Adicionar a nova role
+      // Depois, adicionar a nova role
       const { error: insertError } = await supabase
         .from('user_roles')
         .insert({
           user_id: userId,
           role: role as UserRole,
-          assigned_by: currentUser.user?.id || null
+          assigned_by: null
         });
 
       if (insertError) {
-        console.error('❌ Role update error:', insertError);
-        throw new Error(`Erro ao atualizar permissão: ${insertError.message}`);
+        console.error('❌ Error inserting new role:', insertError);
+        throw new Error(`Erro ao atribuir nova role: ${insertError.message}`);
       }
       
-      console.log('✅ Role updated successfully to:', role);
+      console.log('✅ Role updated successfully');
+      return { userId, role };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast({
         title: "Permissão atualizada",
-        description: "Permissão do usuário atualizada com sucesso!",
+        description: "Permissão atualizada com sucesso!",
       });
     },
     onError: (error: any) => {
-      console.error('❌ Role update mutation error:', error);
+      console.error('❌ Role update error:', error);
       toast({
         title: "Erro",
         description: error.message || "Erro ao atualizar permissão",
@@ -307,18 +250,18 @@ export const useUsers = () => {
     mutationFn: async (userId: string) => {
       console.log('🗑️ Deleting user:', userId);
       
-      // Primeiro, remover todas as roles do usuário
+      // Primeiro, remover todas as roles
       const { error: roleError } = await supabase
         .from('user_roles')
         .delete()
         .eq('user_id', userId);
 
       if (roleError) {
-        console.error('❌ Error deleting user roles:', roleError);
-        throw new Error(`Erro ao remover permissões do usuário: ${roleError.message}`);
+        console.error('❌ Error deleting roles:', roleError);
+        throw new Error(`Erro ao remover roles: ${roleError.message}`);
       }
 
-      // Depois, desativar o perfil do usuário
+      // Depois, desativar o usuário
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ 
@@ -328,11 +271,12 @@ export const useUsers = () => {
         .eq('id', userId);
 
       if (profileError) {
-        console.error('❌ Error deactivating user profile:', profileError);
+        console.error('❌ Error deactivating user:', profileError);
         throw new Error(`Erro ao desativar usuário: ${profileError.message}`);
       }
 
       console.log('✅ User deactivated successfully');
+      return userId;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -342,7 +286,7 @@ export const useUsers = () => {
       });
     },
     onError: (error: any) => {
-      console.error('❌ Delete mutation error:', error);
+      console.error('❌ Delete error:', error);
       toast({
         title: "Erro",
         description: error.message || "Erro ao remover usuário",
