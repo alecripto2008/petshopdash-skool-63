@@ -1,7 +1,7 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
 
 export interface UserProfile {
   id: string;
@@ -19,6 +19,7 @@ type UserRole = 'admin' | 'manager' | 'user' | 'viewer';
 export const useUsers = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { permissions } = useUserPermissions();
 
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ['users'],
@@ -52,8 +53,20 @@ export const useUsers = () => {
         roles: userRoles?.filter(ur => ur.user_id === profile.id).map(ur => ur.role) || []
       })) as UserProfile[];
 
-      console.log('👥 Final users with roles:', usersWithRoles);
-      return usersWithRoles;
+      // Filtrar usuários baseado na role do usuário logado
+      let filteredUsers = usersWithRoles;
+      
+      if (permissions.role === 'manager') {
+        // Manager só pode ver usuários com roles 'user' e 'viewer'
+        filteredUsers = usersWithRoles.filter(user => {
+          const userRole = user.roles[0];
+          return userRole === 'user' || userRole === 'viewer';
+        });
+        console.log('🔒 Manager view: filtered users to only show user/viewer roles');
+      }
+
+      console.log('👥 Final users with roles:', filteredUsers);
+      return filteredUsers;
     },
   });
 
