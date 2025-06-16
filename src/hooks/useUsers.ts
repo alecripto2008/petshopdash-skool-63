@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -84,24 +85,39 @@ export const useUsers = () => {
 
         console.log('✅ Auth user created:', authData.user.id);
 
-        // Criar perfil manualmente para garantir que existe
-        console.log('👤 Creating profile manually...');
-        const { error: profileError } = await supabase
+        // Aguardar um pouco para o trigger processar
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Verificar se o perfil já foi criado pelo trigger
+        console.log('🔍 Checking if profile already exists...');
+        const { data: existingProfile } = await supabase
           .from('profiles')
-          .insert({
-            id: authData.user.id,
-            name: userData.name,
-            email: userData.email,
-            phone: userData.phone || null,
-            active: true
-          });
+          .select('id')
+          .eq('id', authData.user.id)
+          .maybeSingle();
 
-        if (profileError) {
-          console.error('❌ Profile creation error:', profileError);
-          throw new Error(`Erro ao criar perfil: ${profileError.message}`);
+        if (!existingProfile) {
+          // Criar perfil manualmente se não existe
+          console.log('👤 Creating profile manually...');
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: authData.user.id,
+              name: userData.name,
+              email: userData.email,
+              phone: userData.phone || null,
+              active: true
+            });
+
+          if (profileError) {
+            console.error('❌ Profile creation error:', profileError);
+            throw new Error(`Erro ao criar perfil: ${profileError.message}`);
+          }
+
+          console.log('✅ Profile created successfully');
+        } else {
+          console.log('✅ Profile already exists from trigger');
         }
-
-        console.log('✅ Profile created successfully');
 
         // Atribuir role
         console.log('🔐 Assigning role:', userData.role);
