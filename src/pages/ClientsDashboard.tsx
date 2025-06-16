@@ -79,13 +79,7 @@ const ClientsDashboard = () => {
                   onRefresh={handleRefresh}
                   isRefreshing={refreshing}
                   isLoading={loadingContacts}
-                />
-                <AddClientDialog 
-                  isOpen={isAddContactOpen}
-                  onOpenChange={setIsAddContactOpen}
-                  newContact={newContact}
-                  setNewContact={setNewContact}
-                  handleAddContact={handleAddContact}
+                  onAddClient={() => setIsAddContactOpen(true)}
                 />
               </div>
             </div>
@@ -110,6 +104,14 @@ const ClientsDashboard = () => {
           </CardFooter>
         </Card>
       </main>
+
+      <AddClientDialog 
+        isOpen={isAddContactOpen}
+        onOpenChange={setIsAddContactOpen}
+        newContact={newContact}
+        setNewContact={setNewContact}
+        handleAddContact={handleAddContact}
+      />
 
       <ClientDetailSheet 
         isOpen={isDetailSheetOpen}
