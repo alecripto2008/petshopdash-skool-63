@@ -27,7 +27,7 @@ const Logo: React.FC<LogoProps> = ({
     )}>
       <img 
         src="/lovable-uploads/8697baef-6826-467f-8608-0054aefa260c.png" 
-        alt="Pet Paradise Logo" 
+        alt="PetShop Logo" 
         className="w-full h-full object-contain" 
       />
     </div>
