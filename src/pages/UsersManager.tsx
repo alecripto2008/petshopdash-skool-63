@@ -8,11 +8,13 @@ import { Button } from '@/components/ui/button';
 import { useUsers } from '@/hooks/useUsers';
 import { UsersTable } from '@/components/users/UsersTable';
 import { AddUserDialog } from '@/components/users/AddUserDialog';
+import UserSearchBar from '@/components/users/UserSearchBar';
 
 const UsersManager = () => {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const {
     users,
@@ -33,6 +35,17 @@ const UsersManager = () => {
     }
   }, [user, authLoading, navigate]);
 
+  // Filtrar usuários baseado no termo de pesquisa
+  const filteredUsers = users.filter(user =>
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.phone && user.phone.includes(searchTerm))
+  );
+
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-petshop-blue dark:bg-gray-900">
@@ -45,7 +58,7 @@ const UsersManager = () => {
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
       <DashboardHeader />
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-6 flex justify-between items-center">
+        <div className="mb-6 flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
               Gerenciamento de Usuários
@@ -54,36 +67,60 @@ const UsersManager = () => {
               Gerencie usuários, permissões e controle de acesso do sistema
             </p>
           </div>
-          <Button onClick={() => setShowAddDialog(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Adicionar Usuário
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+            <UserSearchBar 
+              searchTerm={searchTerm}
+              onSearchTermChange={setSearchTerm}
+              onRefresh={handleRefresh}
+              isRefreshing={false}
+              isLoading={isLoading}
+            />
+            <Button onClick={() => setShowAddDialog(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Adicionar Usuário
+            </Button>
+          </div>
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          {users.length === 0 ? (
+          {filteredUsers.length === 0 ? (
             <div className="text-center py-12">
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                Nenhum usuário encontrado
+                {searchTerm ? 'Nenhum usuário encontrado' : 'Nenhum usuário no sistema'}
               </h3>
               <p className="text-gray-500 dark:text-gray-400 mb-4">
-                Adicione o primeiro usuário ao sistema.
+                {searchTerm 
+                  ? `Nenhum usuário corresponde ao termo "${searchTerm}".`
+                  : 'Adicione o primeiro usuário ao sistema.'
+                }
               </p>
-              <Button onClick={() => setShowAddDialog(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Adicionar Usuário
-              </Button>
+              {!searchTerm && (
+                <Button onClick={() => setShowAddDialog(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Adicionar Usuário
+                </Button>
+              )}
             </div>
           ) : (
-            <UsersTable
-              users={users}
-              onUpdateUser={updateUser}
-              onUpdateUserRole={updateUserRole}
-              onDeleteUser={deleteUser}
-              isUpdatingUser={isUpdatingUser}
-              isUpdatingRole={isUpdatingRole}
-              isDeletingUser={isDeletingUser}
-            />
+            <>
+              <div className="mb-4 flex justify-between items-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {searchTerm 
+                    ? `${filteredUsers.length} usuário(s) encontrado(s) para "${searchTerm}"`
+                    : `Total de ${filteredUsers.length} usuário(s)`
+                  }
+                </p>
+              </div>
+              <UsersTable
+                users={filteredUsers}
+                onUpdateUser={updateUser}
+                onUpdateUserRole={updateUserRole}
+                onDeleteUser={deleteUser}
+                isUpdatingUser={isUpdatingUser}
+                isUpdatingRole={isUpdatingRole}
+                isDeletingUser={isDeletingUser}
+              />
+            </>
           )}
         </div>
 
