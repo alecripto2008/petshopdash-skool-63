@@ -147,7 +147,7 @@ const ConfigContent = () => {
       });
       
       clearWebhookCache();
-      await fetchConfigs();
+      // Removido fetchConfigs() aqui para evitar redirecionamento automático
     } catch (error) {
       console.error('Error updating config:', error);
       toast({
