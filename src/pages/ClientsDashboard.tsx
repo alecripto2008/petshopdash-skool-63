@@ -54,6 +54,36 @@ const ClientsDashboard = () => {
     }
   }, [user, isLoading, navigate]);
 
+  // Separação dos clientes por mês
+  const clientsByMonth = React.useMemo(() => {
+    const grouped = contacts.reduce((acc, contact) => {
+      const date = contact.lastContact ? new Date(contact.lastContact.split('/').reverse().join('-')) : new Date();
+      const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+      const monthName = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      
+      if (!acc[monthKey]) {
+        acc[monthKey] = {
+          name: monthName,
+          clients: []
+        };
+      }
+      acc[monthKey].clients.push(contact);
+      return acc;
+    }, {});
+
+    return Object.entries(grouped)
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([key, value]) => value);
+  }, [contacts]);
+
+  // Total de clientes do mês atual
+  const currentMonth = React.useMemo(() => {
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+    return clientsByMonth.find(month => month.name.includes(now.getFullYear().toString()) && 
+      month.name.toLowerCase().includes(now.toLocaleDateString('pt-BR', { month: 'long' }).toLowerCase()));
+  }, [clientsByMonth]);
+
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-petshop-blue dark:bg-gray-900">
       <div className="h-16 w-16 border-4 border-t-transparent border-petshop-gold rounded-full animate-spin"></div>
@@ -85,21 +115,39 @@ const ClientsDashboard = () => {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <ClientsTable 
-              contacts={contacts}
-              isLoading={loadingContacts}
-              searchTerm={searchTerm}
-              onContactClick={handleContactClick}
-            />
+            {/* Separação por mês */}
+            {clientsByMonth.map((monthGroup, index) => (
+              <div key={index} className="border-b dark:border-gray-700 last:border-b-0">
+                <div className="bg-gray-50 dark:bg-gray-800 px-6 py-3 border-b dark:border-gray-700">
+                  <h3 className="text-lg font-semibold capitalize">{monthGroup.name}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {monthGroup.clients.length} cliente{monthGroup.clients.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+                <ClientsTable 
+                  contacts={monthGroup.clients}
+                  isLoading={loadingContacts}
+                  searchTerm={searchTerm}
+                  onContactClick={handleContactClick}
+                />
+              </div>
+            ))}
           </CardContent>
           <CardFooter className="border-t dark:border-gray-700 px-6 py-4 bg-gray-50 dark:bg-gray-800">
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Total de clientes: {contacts.filter(contact =>
-                contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (contact.email && contact.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (contact.petName && contact.petName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (contact.phone && contact.phone.includes(searchTerm))
-              ).length}
+            <div className="flex justify-between w-full text-sm text-gray-500 dark:text-gray-400">
+              <span>
+                Total de clientes: {contacts.filter(contact =>
+                  contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  (contact.email && contact.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                  (contact.petName && contact.petName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                  (contact.phone && contact.phone.includes(searchTerm))
+                ).length}
+              </span>
+              {currentMonth && (
+                <span>
+                  Clientes este mês: {currentMonth.clients.length}
+                </span>
+              )}
             </div>
           </CardFooter>
         </Card>
