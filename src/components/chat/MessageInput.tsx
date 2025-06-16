@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Conversation } from '@/types/chat';
 import { useToast } from '@/hooks/use-toast';
+import { getWebhookUrl } from '@/services/webhookService';
+import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 
 interface MessageInputProps {
   selectedChat: string | null;
@@ -23,7 +25,15 @@ const MessageInput = ({ selectedChat, selectedConversation }: MessageInputProps)
     try {
       setIsSending(true);
       
-      const response = await fetch('https://webhook.tomazbello.com/webhook/envia_mensagem', {
+      console.log('Getting webhook URL for sending message...');
+      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.ENVIAR_MENSAGEM);
+      
+      if (!webhookUrl) {
+        throw new Error('Webhook de envio de mensagem não configurado');
+      }
+      
+      console.log('Sending message to webhook:', webhookUrl);
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
