@@ -49,7 +49,7 @@ export function EventsCard({
       <CardHeader>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <CardTitle>Agenda PetShop Pet Paradise</CardTitle>
+            <CardTitle>Agenda PetShop</CardTitle>
             <CardDescription>
               {selectedTab === 'day' 
                 ? `Visualizando ${filteredEvents.length} eventos para ${selectedDate ? format(selectedDate, "dd/MM/yyyy") : 'hoje'}`
