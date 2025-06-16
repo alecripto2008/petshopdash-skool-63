@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
+import UsersHeader from '@/components/users/UsersHeader';
 import { Button } from '@/components/ui/button';
 import { useUsers } from '@/hooks/useUsers';
 import { UsersTable } from '@/components/users/UsersTable';
@@ -56,7 +56,7 @@ const UsersManager = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
-      <DashboardHeader />
+      <UsersHeader />
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6 flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
           <div>
