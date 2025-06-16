@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
 import { useDashboardRealtime } from '@/hooks/useDashboardRealtime';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import MetricsCard from '@/components/dashboard/MetricsCard';
@@ -18,6 +19,7 @@ import { TokenCostCard } from '@/components/dashboard/TokenCostCard';
 
 const Dashboard = () => {
   const { user, isLoading } = useAuth();
+  const { permissions, loading: permissionsLoading } = useUserPermissions();
   const navigate = useNavigate();
   
   // Use o hook apenas uma vez
@@ -29,7 +31,7 @@ const Dashboard = () => {
     }
   }, [user, isLoading, navigate]);
   
-  if (isLoading) {
+  if (isLoading || permissionsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-petshop-blue dark:bg-gray-900">
         <div className="h-16 w-16 border-4 border-t-transparent border-petshop-gold rounded-full animate-spin"></div>
@@ -47,17 +49,17 @@ const Dashboard = () => {
         </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          <MetricsCard />
-          <ChatsCard />
-          <KnowledgeCard />
-          <ClientsCard />
-          <EvolutionCard />
-          <ScheduleCard />
-          <ProductsCard />
-          <PaymentsCard />
-          <UsersCard />
-          <TokenCostCard />
-          <ConfigCard />
+          {permissions.canAccessMetrics && <MetricsCard />}
+          {permissions.canAccessChats && <ChatsCard />}
+          {permissions.canAccessKnowledge && <KnowledgeCard />}
+          {permissions.canAccessClients && <ClientsCard />}
+          {permissions.canAccessEvolution && <EvolutionCard />}
+          {permissions.canAccessSchedule && <ScheduleCard />}
+          {permissions.canAccessProducts && <ProductsCard />}
+          {permissions.canAccessPayments && <PaymentsCard />}
+          {permissions.canAccessUsers && <UsersCard />}
+          {permissions.canAccessTokenCost && <TokenCostCard />}
+          {permissions.canAccessConfig && <ConfigCard />}
         </div>
       </main>
     </div>

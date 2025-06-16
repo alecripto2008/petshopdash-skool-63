@@ -17,9 +17,10 @@ import NotFound from "./pages/NotFound";
 import ProductsManager from "./pages/ProductsManager";
 import PaymentsManager from "./pages/PaymentsManager";
 import UsersManager from "./pages/UsersManager";
+import ConfigManager from "./pages/ConfigManager";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
-import ConfigManager from "./pages/ConfigManager";
 
 const queryClient = new QueryClient();
 
@@ -33,18 +34,66 @@ const App = () => (
           <AuthProvider>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/metrics" element={<MetricsDashboard />} />
-              <Route path="/token-cost" element={<TokenCostDashboard />} />
-              <Route path="/chats" element={<ChatsDashboard />} />
-              <Route path="/knowledge" element={<KnowledgeManager />} />
-              <Route path="/clients" element={<ClientsDashboard />} />
-              <Route path="/evolution" element={<Evolution />} />
-              <Route path="/schedule" element={<Schedule />} />
-              <Route path="/products" element={<ProductsManager />} />
-              <Route path="/payments" element={<PaymentsManager />} />
-              <Route path="/users" element={<UsersManager />} />
-              <Route path="/config" element={<ConfigManager />} />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/metrics" element={
+                <ProtectedRoute requiredPermission="canAccessMetrics">
+                  <MetricsDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/token-cost" element={
+                <ProtectedRoute requiredPermission="canAccessTokenCost">
+                  <TokenCostDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/chats" element={
+                <ProtectedRoute requiredPermission="canAccessChats">
+                  <ChatsDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/knowledge" element={
+                <ProtectedRoute requiredPermission="canAccessKnowledge">
+                  <KnowledgeManager />
+                </ProtectedRoute>
+              } />
+              <Route path="/clients" element={
+                <ProtectedRoute requiredPermission="canAccessClients">
+                  <ClientsDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/evolution" element={
+                <ProtectedRoute requiredPermission="canAccessEvolution">
+                  <Evolution />
+                </ProtectedRoute>
+              } />
+              <Route path="/schedule" element={
+                <ProtectedRoute requiredPermission="canAccessSchedule">
+                  <Schedule />
+                </ProtectedRoute>
+              } />
+              <Route path="/products" element={
+                <ProtectedRoute requiredPermission="canAccessProducts">
+                  <ProductsManager />
+                </ProtectedRoute>
+              } />
+              <Route path="/payments" element={
+                <ProtectedRoute requiredPermission="canAccessPayments">
+                  <PaymentsManager />
+                </ProtectedRoute>
+              } />
+              <Route path="/users" element={
+                <ProtectedRoute requiredPermission="canAccessUsers">
+                  <UsersManager />
+                </ProtectedRoute>
+              } />
+              <Route path="/config" element={
+                <ProtectedRoute requiredPermission="canAccessConfig">
+                  <ConfigManager />
+                </ProtectedRoute>
+              } />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>
