@@ -1,42 +1,12 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { WebhookConfig, WEBHOOK_IDENTIFIERS } from "@/types/webhook";
-
-// Mapeamento dos identificadores para as variáveis de ambiente esperadas
-const ENV_VAR_MAP: Record<string, string> = {
-  [WEBHOOK_IDENTIFIERS.PAUSE_BOT]: "VITE_WEBHOOK_URL_PAUSE_BOT",
-  [WEBHOOK_IDENTIFIERS.UPLOAD_RAG]: "VITE_WEBHOOK_URL_UPLOAD_RAG",
-  [WEBHOOK_IDENTIFIERS.CONFIRM_EVOLUTION_STATUS]: "VITE_WEBHOOK_URL_CONFIRM_EVOLUTION_STATUS",
-  [WEBHOOK_IDENTIFIERS.UPDATE_EVOLUTION_QR]: "VITE_WEBHOOK_URL_UPDATE_EVOLUTION_QR",
-  [WEBHOOK_IDENTIFIERS.CONFIG_AGENT]: "VITE_WEBHOOK_URL_CONFIG_AGENT",
-};
-
-// URLs padrão para fallback final caso não estejam no banco nem nas variáveis de ambiente
-const FALLBACK_DEFAULT_WEBHOOKS = {
-  [WEBHOOK_IDENTIFIERS.PAUSE_BOT]: "https://webhook.tomazbello.com/webhook/pause-bot",
-  [WEBHOOK_IDENTIFIERS.UPLOAD_RAG]: "https://webhook.tomazbello.com/webhook/upload-rag",
-  [WEBHOOK_IDENTIFIERS.CONFIRM_EVOLUTION_STATUS]: "https://webhook.tomazbello.com/webhook/confirma",
-  [WEBHOOK_IDENTIFIERS.UPDATE_EVOLUTION_QR]: "https://webhook.tomazbello.com/webhook/atualizar-qr-code",
-  [WEBHOOK_IDENTIFIERS.CONFIG_AGENT]: "https://webhook.tomazbello.com/webhook/config_agent",
-};
+import { WebhookConfig } from "@/types/webhook";
 
 // Cache para as URLs dos webhooks
 let webhookCache: Record<string, string> | null = null;
 
 /**
- * Obtém a URL de uma variável de ambiente específica.
- */
-function getEnvWebhookUrl(identifier: string): string | undefined {
-  const envVarName = ENV_VAR_MAP[identifier];
-  if (envVarName) {
-    // Em projetos Vite, as variáveis de ambiente são acessadas via import.meta.env
-    return import.meta.env[envVarName] as string | undefined;
-  }
-  return undefined;
-}
-
-/**
- * Carrega todos os webhooks, priorizando Supabase, depois variáveis de ambiente, depois fallbacks.
+ * Carrega todos os webhooks do banco de dados.
  */
 export async function loadWebhooks(): Promise<Record<string, string>> {
   const webhookMap: Record<string, string> = {};
@@ -49,39 +19,25 @@ export async function loadWebhooks(): Promise<Record<string, string>> {
       .order("name");
 
     if (error) {
-      console.error("Error loading webhooks from Supabase, will try environment variables and fallbacks:", error);
-      // Não lança o erro aqui, permite tentar as outras fontes
-    } else if (data) {
+      console.error("Error loading webhooks from Supabase:", error);
+      throw error;
+    }
+
+    if (data) {
       const webhooks = data as WebhookConfig[];
       console.log("Loaded webhooks from Supabase:", webhooks);
       webhooks.forEach(webhook => {
         if (webhook.identifier) {
           webhookMap[webhook.identifier] = webhook.url;
         }
+        // Também adiciona por nome para compatibilidade
+        webhookMap[webhook.name.toLowerCase().replace(/\s+/g, '_')] = webhook.url;
       });
     }
   } catch (dbError) {
     console.error("Exception during Supabase webhook loading:", dbError);
+    throw dbError;
   }
-
-  // Preenche com variáveis de ambiente se não vieram do Supabase
-  Object.keys(ENV_VAR_MAP).forEach(identifier => {
-    if (!webhookMap[identifier]) { // Só preenche se não veio do Supabase
-      const envUrl = getEnvWebhookUrl(identifier);
-      if (envUrl) {
-        webhookMap[identifier] = envUrl;
-        console.log(`Webhook ${identifier} loaded from environment variable.`);
-      }
-    }
-  });
-
-  // Preenche com valores de fallback final caso algum esteja faltando
-  Object.keys(FALLBACK_DEFAULT_WEBHOOKS).forEach(key => {
-    if (!webhookMap[key]) {
-      webhookMap[key] = FALLBACK_DEFAULT_WEBHOOKS[key as keyof typeof FALLBACK_DEFAULT_WEBHOOKS];
-      console.log(`Webhook ${key} using hardcoded fallback.`);
-    }
-  });
 
   webhookCache = webhookMap;
   console.log("Final webhook map for cache:", webhookCache);
@@ -89,25 +45,52 @@ export async function loadWebhooks(): Promise<Record<string, string>> {
 }
 
 /**
- * Obtém a URL de um webhook específico pelo seu identificador.
- * A ordem de prioridade é: Cache -> Supabase (via loadWebhooks se cache vazio) -> Env Var (via loadWebhooks) -> Fallback (via loadWebhooks).
+ * Obtém a URL de um webhook específico pelo seu identificador ou nome.
  */
 export async function getWebhookUrl(identifier: string): Promise<string> {
   if (!webhookCache) {
-    await loadWebhooks(); // Carrega e popula o cache com a lógica de prioridade
+    await loadWebhooks();
   }
 
-  // Retorna do cache. Se não estiver lá, é um identificador desconhecido.
-  return webhookCache?.[identifier] || 
-         FALLBACK_DEFAULT_WEBHOOKS[identifier as keyof typeof FALLBACK_DEFAULT_WEBHOOKS] || // Fallback final para segurança
-         ""; // Retorna string vazia se realmente não encontrado em lugar nenhum
+  // Primeiro tenta pelo identificador
+  let url = webhookCache?.[identifier];
+  
+  // Se não encontrar, tenta pelo nome formatado
+  if (!url) {
+    const formattedName = identifier.toLowerCase().replace(/\s+/g, '_');
+    url = webhookCache?.[formattedName];
+  }
+
+  if (!url) {
+    console.warn(`Webhook with identifier '${identifier}' not found`);
+    return "";
+  }
+
+  return url;
 }
 
 /**
- * Limpa o cache de webhooks forçando nova consulta ao banco e recarga das env vars na próxima chamada.
+ * Obtém todos os webhooks carregados.
+ */
+export async function getAllWebhooks(): Promise<WebhookConfig[]> {
+  try {
+    const { data, error } = await supabase
+      .from("webhook_configs")
+      .select("*")
+      .order("name");
+
+    if (error) throw error;
+    return data as WebhookConfig[];
+  } catch (error) {
+    console.error("Error fetching all webhooks:", error);
+    return [];
+  }
+}
+
+/**
+ * Limpa o cache de webhooks forçando nova consulta ao banco na próxima chamada.
  */
 export function clearWebhookCache(): void {
   webhookCache = null;
   console.log("Webhook cache cleared.");
 }
-
