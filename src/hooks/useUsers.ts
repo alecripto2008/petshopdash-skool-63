@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -248,7 +247,7 @@ export const useUsers = () => {
 
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      console.log('🗑️ Deleting user:', userId);
+      console.log('🗑️ Physically deleting user:', userId);
       
       // Primeiro, remover todas as roles
       const { error: roleError } = await supabase
@@ -261,35 +260,36 @@ export const useUsers = () => {
         throw new Error(`Erro ao remover roles: ${roleError.message}`);
       }
 
-      // Depois, desativar o usuário
+      // Depois, deletar fisicamente o perfil
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ 
-          active: false,
-          updated_at: new Date().toISOString()
-        })
+        .delete()
         .eq('id', userId);
 
       if (profileError) {
-        console.error('❌ Error deactivating user:', profileError);
-        throw new Error(`Erro ao desativar usuário: ${profileError.message}`);
+        console.error('❌ Error deleting user profile:', profileError);
+        throw new Error(`Erro ao deletar usuário: ${profileError.message}`);
       }
 
-      console.log('✅ User deactivated successfully');
+      // Por fim, deletar o usuário do auth (se necessário)
+      // Nota: Isso pode não ser possível via client, dependendo das permissões
+      // O perfil já foi deletado, que é o principal
+
+      console.log('✅ User physically deleted successfully');
       return userId;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast({
         title: "Usuário removido",
-        description: "Usuário desativado com sucesso!",
+        description: "Usuário deletado permanentemente com sucesso!",
       });
     },
     onError: (error: any) => {
       console.error('❌ Delete error:', error);
       toast({
         title: "Erro",
-        description: error.message || "Erro ao remover usuário",
+        description: error.message || "Erro ao deletar usuário",
         variant: "destructive",
       });
     },
