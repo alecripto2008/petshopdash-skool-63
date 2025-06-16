@@ -68,7 +68,7 @@ const ConfigContent = () => {
           word => word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' ');
         
-        const defaultUrl = `https://webhook.n8nlabz.com.br/webhook/${identifier.toLowerCase().replace(/_/g, '-')}`;
+        const defaultUrl = `https://webhook.tomazbello.com/webhook/${identifier.toLowerCase().replace(/_/g, '-')}`;
         
         return {
           name: readableName,
