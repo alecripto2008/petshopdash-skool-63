@@ -10,11 +10,10 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit2, Trash2, Shield } from 'lucide-react';
+import { Edit2, Trash2 } from 'lucide-react';
 import { UserProfile } from '@/hooks/useUsers';
 import { EditUserDialog } from './EditUserDialog';
 import { DeleteUserDialog } from './DeleteUserDialog';
-import { UserRoleDialog } from './UserRoleDialog';
 
 interface UsersTableProps {
   users: UserProfile[];
@@ -37,7 +36,6 @@ export const UsersTable: React.FC<UsersTableProps> = ({
 }) => {
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [deletingUser, setDeletingUser] = useState<UserProfile | null>(null);
-  const [roleUser, setRoleUser] = useState<UserProfile | null>(null);
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
@@ -119,13 +117,6 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setRoleUser(user)}
-                    >
-                      <Shield className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
                       onClick={() => setDeletingUser(user)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -143,15 +134,9 @@ export const UsersTable: React.FC<UsersTableProps> = ({
         open={!!editingUser}
         onOpenChange={(open) => !open && setEditingUser(null)}
         onSave={onUpdateUser}
+        onUpdateRole={onUpdateUserRole}
         isLoading={isUpdatingUser}
-      />
-
-      <UserRoleDialog
-        user={roleUser}
-        open={!!roleUser}
-        onOpenChange={(open) => !open && setRoleUser(null)}
-        onSave={onUpdateUserRole}
-        isLoading={isUpdatingRole}
+        isUpdatingRole={isUpdatingRole}
       />
 
       <DeleteUserDialog

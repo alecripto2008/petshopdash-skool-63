@@ -18,12 +18,20 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { UserProfile } from '@/hooks/useUsers';
 
 interface EditUserFormData {
   name: string;
   phone?: string;
   active: boolean;
+  role: string;
 }
 
 interface EditUserDialogProps {
@@ -31,7 +39,9 @@ interface EditUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (userData: { id: string; name: string; phone?: string; active: boolean }) => void;
+  onUpdateRole: (data: { userId: string; role: string }) => void;
   isLoading: boolean;
+  isUpdatingRole: boolean;
 }
 
 export const EditUserDialog: React.FC<EditUserDialogProps> = ({
@@ -39,13 +49,16 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
   open,
   onOpenChange,
   onSave,
+  onUpdateRole,
   isLoading,
+  isUpdatingRole,
 }) => {
   const form = useForm<EditUserFormData>({
     defaultValues: {
       name: '',
       phone: '',
       active: true,
+      role: 'user',
     },
   });
 
@@ -55,21 +68,35 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
         name: user.name,
         phone: user.phone || '',
         active: user.active,
+        role: user.roles[0] || 'user',
       });
     }
   }, [user, form]);
 
-  const handleSubmit = (data: EditUserFormData) => {
+  const handleSubmit = async (data: EditUserFormData) => {
     if (!user) return;
     
+    // Atualizar dados do usuário
     onSave({
       id: user.id,
       name: data.name,
       phone: data.phone,
       active: data.active,
     });
+
+    // Se a role mudou, atualizar também
+    const currentRole = user.roles[0] || 'user';
+    if (data.role !== currentRole) {
+      onUpdateRole({
+        userId: user.id,
+        role: data.role,
+      });
+    }
+
     onOpenChange(false);
   };
+
+  const isProcessing = isLoading || isUpdatingRole;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -111,6 +138,31 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
 
             <FormField
               control={form.control}
+              name="role"
+              rules={{ required: 'Permissão é obrigatória' }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Permissão</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a permissão" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="viewer">Visualizador</SelectItem>
+                      <SelectItem value="user">Usuário</SelectItem>
+                      <SelectItem value="manager">Gerente</SelectItem>
+                      <SelectItem value="admin">Administrador</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="active"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
@@ -130,17 +182,27 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
               )}
             />
 
+            <div className="bg-muted p-3 rounded-md text-sm">
+              <strong>Descrição das permissões:</strong>
+              <ul className="mt-1 space-y-1">
+                <li><strong>Visualizador:</strong> Apenas visualização</li>
+                <li><strong>Usuário:</strong> Acesso básico</li>
+                <li><strong>Gerente:</strong> Acesso intermediário</li>
+                <li><strong>Administrador:</strong> Acesso total</li>
+              </ul>
+            </div>
+
             <div className="flex justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                disabled={isLoading}
+                disabled={isProcessing}
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Salvando...' : 'Salvar'}
+              <Button type="submit" disabled={isProcessing}>
+                {isProcessing ? 'Salvando...' : 'Salvar'}
               </Button>
             </div>
           </form>
