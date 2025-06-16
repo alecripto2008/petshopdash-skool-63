@@ -62,7 +62,23 @@ export const useUsers = () => {
       console.log('🚀 Starting user creation process...', userData);
       
       try {
+        // Verificar se o email já existe
+        console.log('📧 Checking if email already exists...');
+        const { data: existingUser } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('email', userData.email)
+          .maybeSingle();
+
+        if (existingUser) {
+          console.log('❌ Email already exists:', userData.email);
+          throw new Error('Este email já está sendo usado por outro usuário');
+        }
+
+        console.log('✅ Email is available');
+
         // Criar usuário no auth
+        console.log('🔐 Creating auth user...');
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: userData.email,
           password: userData.password,
@@ -80,26 +96,34 @@ export const useUsers = () => {
         }
 
         if (!authData.user) {
-          throw new Error('Usuário não foi criado');
+          console.error('❌ No user returned from auth');
+          throw new Error('Usuário não foi criado - nenhum dado retornado');
         }
 
-        console.log('✅ Auth user created:', authData.user.id);
+        console.log('✅ Auth user created successfully:', authData.user.id);
 
         // Aguardar um pouco para o trigger processar
-        await new Promise(resolve => setTimeout(resolve, 500));
+        console.log('⏳ Waiting for trigger to process...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         // Verificar se o perfil já foi criado pelo trigger
-        console.log('🔍 Checking if profile already exists...');
-        const { data: existingProfile } = await supabase
+        console.log('🔍 Checking if profile was created by trigger...');
+        const { data: existingProfile, error: checkError } = await supabase
           .from('profiles')
-          .select('id')
+          .select('id, name, email')
           .eq('id', authData.user.id)
           .maybeSingle();
+
+        if (checkError) {
+          console.error('❌ Error checking profile:', checkError);
+        }
+
+        console.log('📋 Profile check result:', existingProfile);
 
         if (!existingProfile) {
           // Criar perfil manualmente se não existe
           console.log('👤 Creating profile manually...');
-          const { error: profileError } = await supabase
+          const { data: createdProfile, error: profileError } = await supabase
             .from('profiles')
             .insert({
               id: authData.user.id,
@@ -107,43 +131,49 @@ export const useUsers = () => {
               email: userData.email,
               phone: userData.phone || null,
               active: true
-            });
+            })
+            .select()
+            .single();
 
           if (profileError) {
             console.error('❌ Profile creation error:', profileError);
             throw new Error(`Erro ao criar perfil: ${profileError.message}`);
           }
 
-          console.log('✅ Profile created successfully');
+          console.log('✅ Profile created manually:', createdProfile);
         } else {
           console.log('✅ Profile already exists from trigger');
         }
 
         // Atribuir role
-        console.log('🔐 Assigning role:', userData.role);
-        const { error: roleError } = await supabase
+        console.log('🔐 Assigning role:', userData.role, 'to user:', authData.user.id);
+        const { data: roleData, error: roleError } = await supabase
           .from('user_roles')
           .insert({
             user_id: authData.user.id,
             role: userData.role as UserRole,
             assigned_by: null
-          });
+          })
+          .select()
+          .single();
 
         if (roleError) {
           console.error('❌ Role assignment error:', roleError);
           throw new Error(`Erro ao atribuir permissão: ${roleError.message}`);
         }
 
-        console.log('✅ User created successfully with role:', userData.role);
+        console.log('✅ Role assigned successfully:', roleData);
+        console.log('🎉 User creation process completed successfully!');
+        
         return authData.user;
 
       } catch (error) {
-        console.error('💥 Error in user creation:', error);
+        console.error('💥 Error in user creation process:', error);
         throw error;
       }
     },
     onSuccess: () => {
-      console.log('✅ User creation successful, refreshing data...');
+      console.log('✅ Mutation success callback triggered');
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast({
         title: "Usuário criado",
@@ -151,7 +181,7 @@ export const useUsers = () => {
       });
     },
     onError: (error: any) => {
-      console.error('❌ User creation failed:', error);
+      console.error('❌ Mutation error callback triggered:', error);
       toast({
         title: "Erro",
         description: error.message || "Erro ao criar usuário",
