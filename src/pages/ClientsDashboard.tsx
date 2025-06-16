@@ -76,7 +76,32 @@ const ClientsDashboard = () => {
   // Separação dos clientes por mês
   const clientsByMonth = React.useMemo(() => {
     const grouped: Record<string, MonthGroup> = filteredContacts.reduce((acc, contact) => {
-      const date = contact.lastContact ? new Date(contact.lastContact.split('/').reverse().join('-')) : new Date();
+      // Corrigir a manipulação da data
+      let date: Date;
+      
+      if (contact.lastContact && contact.lastContact !== 'Desconhecido') {
+        // Se lastContact está no formato DD/MM/YYYY, converter para YYYY-MM-DD
+        if (contact.lastContact.includes('/')) {
+          const parts = contact.lastContact.split('/');
+          if (parts.length === 3) {
+            // DD/MM/YYYY -> YYYY-MM-DD
+            date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+          } else {
+            date = new Date();
+          }
+        } else {
+          // Assumir que já está em formato ISO
+          date = new Date(contact.lastContact);
+        }
+      } else {
+        date = new Date();
+      }
+      
+      // Verificar se a data é válida
+      if (isNaN(date.getTime())) {
+        date = new Date();
+      }
+      
       const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
       const monthName = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
       
