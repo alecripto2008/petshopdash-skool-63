@@ -86,36 +86,7 @@ export const useUsers = () => {
         console.log('✅ Auth user created:', authData.user.id);
 
         // Aguardar um pouco para o trigger processar
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Verificar se o perfil foi criado pelo trigger
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', authData.user.id)
-          .single();
-
-        if (profileError || !profile) {
-          console.log('⚠️ Profile not found, creating manually...');
-          // Criar perfil manualmente se o trigger não funcionou
-          const { error: createProfileError } = await supabase
-            .from('profiles')
-            .insert({
-              id: authData.user.id,
-              name: userData.name,
-              email: userData.email,
-              phone: userData.phone || null,
-              active: true
-            });
-
-          if (createProfileError) {
-            console.error('❌ Error creating profile:', createProfileError);
-            throw new Error(`Erro ao criar perfil: ${createProfileError.message}`);
-          }
-          console.log('✅ Profile created manually');
-        } else {
-          console.log('✅ Profile found from trigger');
-        }
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         // Atribuir role
         console.log('🔐 Assigning role:', userData.role);
