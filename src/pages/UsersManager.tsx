@@ -2,9 +2,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
 import UsersHeader from '@/components/users/UsersHeader';
-import { Button } from '@/components/ui/button';
 import { useUsers } from '@/hooks/useUsers';
 import { UsersTable } from '@/components/users/UsersTable';
 import { AddUserDialog } from '@/components/users/AddUserDialog';
@@ -58,7 +56,7 @@ const UsersManager = () => {
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
       <UsersHeader />
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-6 flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
+        <div className="mb-6 flex flex-col gap-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
               Gerenciamento de Usuários
@@ -67,18 +65,15 @@ const UsersManager = () => {
               Gerencie usuários, permissões e controle de acesso do sistema
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+          <div className="w-full">
             <UserSearchBar 
               searchTerm={searchTerm}
               onSearchTermChange={setSearchTerm}
               onRefresh={handleRefresh}
+              onAddUser={() => setShowAddDialog(true)}
               isRefreshing={false}
               isLoading={isLoading}
             />
-            <Button onClick={() => setShowAddDialog(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Adicionar Usuário
-            </Button>
           </div>
         </div>
 
@@ -95,10 +90,12 @@ const UsersManager = () => {
                 }
               </p>
               {!searchTerm && (
-                <Button onClick={() => setShowAddDialog(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
+                <button
+                  onClick={() => setShowAddDialog(true)}
+                  className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                >
                   Adicionar Usuário
-                </Button>
+                </button>
               )}
             </div>
           ) : (
