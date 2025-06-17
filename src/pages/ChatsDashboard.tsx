@@ -105,7 +105,7 @@ const ChatsDashboard = () => {
       
       // Note: You'll need to add a webhook for starting bot in the config
       // For now, keeping the hardcoded URL until you add it to the config
-      const response = await fetch('https://webhook.n8nlabz.com.br/webhook/inicia_bot', {
+      const response = await fetch('https://n8n.tomazbello.com/webhook/inicia_bot', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
