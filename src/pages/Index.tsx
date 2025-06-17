@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -151,7 +152,7 @@ const Index = () => {
             style={{ backdropFilter: "blur(16px)" }}
           >
             <h1 className="text-2xl font-bold text-white text-center mb-2 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-              Bem-vindo ao Pet Paradise!
+              Bem-vindo ao PetShop!
             </h1>
             <p className="text-white/80 text-center mb-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
               Entre para gerenciar seu petshop
