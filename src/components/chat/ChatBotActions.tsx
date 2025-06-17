@@ -2,10 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Pause } from 'lucide-react';
 import PauseDurationDialog from '@/components/PauseDurationDialog';
-import { getWebhookUrl } from '@/services/webhookService';
-import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 
 interface ChatBotActionsProps {
   selectedPhoneNumber: string;
@@ -28,9 +25,7 @@ const ChatBotActions = ({ selectedPhoneNumber, selectedChat, isLoading }: ChatBo
 
   const pauseBot = async (phoneNumber: string, duration: number | null) => {
     try {
-      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.PAUSA_BOT);
-      
-      const response = await fetch(webhookUrl, {
+      const response = await fetch('https://n8n.tomazbello.com/webhook/pausa_bot', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -62,21 +57,37 @@ const ChatBotActions = ({ selectedPhoneNumber, selectedChat, isLoading }: ChatBo
     }
   };
 
+  const startBot = async (phoneNumber: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const response = await fetch('https://n8n.tomazbello.com/webhook/inicia_bot', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phoneNumber }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Erro ao iniciar o bot');
+      }
+      
+      toast({
+        title: "Bot iniciado",
+        description: `O bot foi iniciado para ${phoneNumber}`,
+      });
+    } catch (error) {
+      console.error('Erro ao iniciar bot:', error);
+      toast({
+        title: "Erro ao iniciar bot",
+        description: "Ocorreu um erro ao tentar iniciar o bot.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <>
-      <div className="flex items-center gap-2 ml-auto">
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-1"
-          onClick={(e) => openPauseDialog(selectedPhoneNumber, e)}
-          disabled={isLoading?.pauseBot || !selectedPhoneNumber}
-        >
-          <Pause className="h-4 w-4" />
-          Pausar
-        </Button>
-      </div>
-      
       <PauseDurationDialog 
         isOpen={pauseDialogOpen}
         onClose={closePauseDialog}

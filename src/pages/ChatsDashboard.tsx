@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -7,8 +8,6 @@ import { useConversations } from '@/hooks/useConversations';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 import { useChatMessages } from '@/hooks/useChatMessages';
 import PauseDurationDialog from '@/components/PauseDurationDialog';
-import { getWebhookUrl } from '@/services/webhookService';
-import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 
 const ChatsDashboard = () => {
   const { user, signOut } = useAuth();
@@ -56,15 +55,7 @@ const ChatsDashboard = () => {
     try {
       setIsLoading(prev => ({ ...prev, [`pause-${selectedPhoneNumber}`]: true }));
       
-      console.log('Getting webhook URL for pausing bot...');
-      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.PAUSA_BOT);
-      
-      if (!webhookUrl) {
-        throw new Error('Webhook de pausar bot não configurado');
-      }
-      
-      console.log('Pausing bot via webhook:', webhookUrl);
-      const response = await fetch(webhookUrl, {
+      const response = await fetch('https://n8n.tomazbello.com/webhook/pausa_bot', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -103,8 +94,6 @@ const ChatsDashboard = () => {
     try {
       setIsLoading(prev => ({ ...prev, [`start-${phoneNumber}`]: true }));
       
-      // Note: You'll need to add a webhook for starting bot in the config
-      // For now, keeping the hardcoded URL until you add it to the config
       const response = await fetch('https://n8n.tomazbello.com/webhook/inicia_bot', {
         method: 'POST',
         headers: {
