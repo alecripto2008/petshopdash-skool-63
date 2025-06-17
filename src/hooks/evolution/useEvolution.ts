@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useQrCodeUpdate } from './useQrCodeUpdate';
 import { useConnectionStatus } from './useConnectionStatus';
+import { getWebhookUrl } from '@/services/webhookService';
+import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 
 export const useEvolution = () => {
   const [instanceName, setInstanceName] = useState('');
@@ -38,16 +40,47 @@ export const useEvolution = () => {
     setConfirmationStatus(null);
     
     try {
-      toast({
-        title: "Funcionalidade desativada",
-        description: "A criação de instâncias foi temporariamente desativada.",
-        variant: "destructive"
+      console.log('Creating instance with name:', instanceName);
+      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.CREATE_EVOLUTION_INSTANCE);
+      
+      if (!webhookUrl) {
+        throw new Error('Webhook de criação de instância não configurado');
+      }
+      
+      console.log('Creating instance via webhook:', webhookUrl);
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          instanceName: instanceName.trim() 
+        }),
       });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const qrCodeUrl = URL.createObjectURL(blob);
+        setQrCodeData(qrCodeUrl);
+        setConfirmationStatus('waiting');
+        
+        // Inicia verificação de status da conexão
+        startChecking();
+        
+        toast({
+          title: "Instância criada!",
+          description: "Escaneie o QR code para conectar seu WhatsApp.",
+        });
+      } else {
+        const errorText = await response.text();
+        console.error('Error creating instance:', errorText);
+        throw new Error(`Falha ao criar instância: ${response.status}`);
+      }
     } catch (error) {
       console.error('Erro ao criar instância:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível criar a instância. Tente novamente.",
+        description: error instanceof Error ? error.message : "Não foi possível criar a instância. Tente novamente.",
         variant: "destructive"
       });
       setConfirmationStatus(null);
