@@ -13,6 +13,7 @@ export const WEBHOOK_IDENTIFIERS = {
   // Mensagens
   ENVIAR_MENSAGEM: 'enviar_mensagem',
   PAUSA_BOT: 'pausa_bot',
+  INICIA_BOT: 'inicia_bot',
   CHAT_ENVIAR_MENSAGEM: 'chat_enviar_mensagem',
   
   // Agenda

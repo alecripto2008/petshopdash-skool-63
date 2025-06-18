@@ -8,6 +8,8 @@ import { useConversations } from '@/hooks/useConversations';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 import { useChatMessages } from '@/hooks/useChatMessages';
 import PauseDurationDialog from '@/components/PauseDurationDialog';
+import { getWebhookUrl } from '@/services/webhookService';
+import { WEBHOOK_IDENTIFIERS } from '@/types/webhook';
 
 const ChatsDashboard = () => {
   const { user, signOut } = useAuth();
@@ -55,7 +57,13 @@ const ChatsDashboard = () => {
     try {
       setIsLoading(prev => ({ ...prev, [`pause-${selectedPhoneNumber}`]: true }));
       
-      const response = await fetch('https://n8n.tomazbello.com/webhook/pausa_bot', {
+      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.PAUSA_BOT);
+      
+      if (!webhookUrl) {
+        throw new Error('Webhook de pausa não configurado');
+      }
+      
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -94,7 +102,13 @@ const ChatsDashboard = () => {
     try {
       setIsLoading(prev => ({ ...prev, [`start-${phoneNumber}`]: true }));
       
-      const response = await fetch('https://n8n.tomazbello.com/webhook/inicia_bot', {
+      const webhookUrl = await getWebhookUrl('inicia_bot');
+      
+      if (!webhookUrl) {
+        throw new Error('Webhook de início não configurado');
+      }
+      
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

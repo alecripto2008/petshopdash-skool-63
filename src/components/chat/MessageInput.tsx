@@ -26,8 +26,8 @@ const MessageInput = ({ selectedChat, selectedConversation }: MessageInputProps)
       setIsSending(true);
       
       console.log('Getting webhook URL for sending message...');
-      console.log('Looking for identifier:', WEBHOOK_IDENTIFIERS.ENVIAR_MENSAGEM);
-      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.ENVIAR_MENSAGEM);
+      console.log('Looking for identifier:', WEBHOOK_IDENTIFIERS.CHAT_ENVIAR_MENSAGEM);
+      const webhookUrl = await getWebhookUrl(WEBHOOK_IDENTIFIERS.CHAT_ENVIAR_MENSAGEM);
       
       console.log('Webhook URL found:', webhookUrl);
       
