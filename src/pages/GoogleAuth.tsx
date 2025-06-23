@@ -1,20 +1,29 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Shield, ArrowLeft } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const GoogleAuth = () => {
   const navigate = useNavigate();
 
-  const handleAuthorize = () => {
+  const handleAuthorize = async () => {
     try {
       console.log('Iniciando autorização do Google...');
       
+      // Busca o Client ID do Google via Edge Function
+      const { data, error } = await supabase.functions.invoke('get-google-client-id');
+      
+      if (error || !data?.clientId) {
+        throw new Error('Client ID do Google não configurado ou não encontrado');
+      }
+
       // Parâmetros OAuth 2.0 do Google
       const googleAuthParams = new URLSearchParams({
-        client_id: 'YOUR_GOOGLE_CLIENT_ID', // Será configurado via variável de ambiente
+        client_id: data.clientId,
         redirect_uri: 'https://n8n.tomazbello.com/rest/oauth2-credential/callback',
         response_type: 'code',
         scope: 'openid email profile',
@@ -36,7 +45,7 @@ const GoogleAuth = () => {
       console.error('Erro ao iniciar autorização:', error);
       toast({
         title: "Erro na Autorização",
-        description: "Não foi possível iniciar o processo de autorização. Tente novamente.",
+        description: "Não foi possível iniciar o processo de autorização. Verifique se o Client ID está configurado.",
         variant: "destructive"
       });
     }
