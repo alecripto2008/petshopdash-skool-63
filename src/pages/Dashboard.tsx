@@ -16,6 +16,7 @@ import PaymentsCard from '@/components/dashboard/PaymentsCard';
 import UsersCard from '@/components/dashboard/UsersCard';
 import { ConfigCard } from '@/components/dashboard/ConfigCard';
 import { TokenCostCard } from '@/components/dashboard/TokenCostCard';
+import GoogleAuthCard from '@/components/dashboard/GoogleAuthCard';
 
 const Dashboard = () => {
   const { user, isLoading } = useAuth();
@@ -60,6 +61,7 @@ const Dashboard = () => {
           {permissions.canAccessUsers && <UsersCard />}
           {permissions.canAccessTokenCost && <TokenCostCard />}
           {permissions.canAccessConfig && <ConfigCard />}
+          {permissions.canAccessConfig && <GoogleAuthCard />}
         </div>
       </main>
     </div>
