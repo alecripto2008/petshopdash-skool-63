@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,9 +36,22 @@ const GoogleAuth = () => {
       const currentOrigin = window.location.origin;
       console.log('🌐 Origin atual da aplicação:', currentOrigin);
 
-      // State simples para n8n - apenas timestamp numérico
-      const stateValue = Date.now().toString();
-      console.log('🔑 State gerado (apenas timestamp):', stateValue);
+      // Tentar diferentes formatos de state para n8n
+      const timestamp = Date.now();
+      const stateFormats = [
+        timestamp.toString(), // Apenas número
+        `${timestamp}`, // Template string
+        btoa(timestamp.toString()), // Base64 encoded
+        `state_${timestamp}`, // Com prefixo
+        'test123', // State fixo para teste
+      ];
+
+      // Usar o primeiro formato por padrão, mas log todos para debugging
+      const stateValue = stateFormats[0];
+      console.log('🔑 Formatos de state testados:', stateFormats);
+      console.log('🔑 State escolhido:', stateValue);
+      console.log('🔑 Tipo do state:', typeof stateValue);
+      console.log('🔑 Comprimento do state:', stateValue.length);
 
       // Parâmetros OAuth 2.0 do Google para Calendar
       const googleAuthParams = new URLSearchParams({
@@ -53,8 +67,13 @@ const GoogleAuth = () => {
       // URL de autorização do Google
       const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${googleAuthParams.toString()}`;
       
-      console.log('🔗 URL de autorização construída para Google Calendar:', googleAuthUrl);
+      console.log('🔗 Parâmetros OAuth completos:', Object.fromEntries(googleAuthParams.entries()));
+      console.log('🔗 URL de autorização construída:', googleAuthUrl);
+      console.log('🔗 Redirect URI usado:', 'https://n8n.tomazbello.com/rest/oauth2-credential/callback');
       console.log('🚀 Redirecionando para o Google OAuth...');
+      
+      // Mostrar alerta antes de redirecionar
+      alert(`State sendo usado: ${stateValue}\nTipo: ${typeof stateValue}\nComprimento: ${stateValue.length}\n\nVerifique o console para logs completos.`);
       
       // Redireciona para o Google OAuth
       window.location.href = googleAuthUrl;
@@ -121,7 +140,7 @@ const GoogleAuth = () => {
                   <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
                     <p className="text-sm text-amber-800 dark:text-amber-200">
                       <strong>Debug:</strong> Abra o console do navegador (F12) para ver logs 
-                      detalhados do processo de autorização.
+                      detalhados do processo de autorização. Um alerta também mostrará detalhes do state.
                     </p>
                   </div>
                 </div>
