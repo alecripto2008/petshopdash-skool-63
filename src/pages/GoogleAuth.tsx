@@ -36,22 +36,23 @@ const GoogleAuth = () => {
       const currentOrigin = window.location.origin;
       console.log('🌐 Origin atual da aplicação:', currentOrigin);
 
-      // Tentar diferentes formatos de state para n8n
+      // Formato de state mais complexo para n8n - incluindo credentialId
       const timestamp = Date.now();
-      const stateFormats = [
-        timestamp.toString(), // Apenas número
-        `${timestamp}`, // Template string
-        btoa(timestamp.toString()), // Base64 encoded
-        `state_${timestamp}`, // Com prefixo
-        'test123', // State fixo para teste
-      ];
-
-      // Usar o primeiro formato por padrão, mas log todos para debugging
-      const stateValue = stateFormats[0];
-      console.log('🔑 Formatos de state testados:', stateFormats);
-      console.log('🔑 State escolhido:', stateValue);
+      const credentialId = 'google-calendar-oauth2'; // ID padrão para n8n
+      const stateObject = {
+        credentialId: credentialId,
+        timestamp: timestamp,
+        source: 'lovable-app'
+      };
+      
+      // Usar formato que o n8n espera: credentialId.timestamp
+      const stateValue = `${credentialId}.${timestamp}`;
+      
+      console.log('🔑 State object criado:', stateObject);
+      console.log('🔑 State final escolhido:', stateValue);
       console.log('🔑 Tipo do state:', typeof stateValue);
       console.log('🔑 Comprimento do state:', stateValue.length);
+      console.log('🔑 Formato usado: credentialId.timestamp');
 
       // Parâmetros OAuth 2.0 do Google para Calendar
       const googleAuthParams = new URLSearchParams({
@@ -73,7 +74,7 @@ const GoogleAuth = () => {
       console.log('🚀 Redirecionando para o Google OAuth...');
       
       // Mostrar alerta antes de redirecionar
-      alert(`State sendo usado: ${stateValue}\nTipo: ${typeof stateValue}\nComprimento: ${stateValue.length}\n\nVerifique o console para logs completos.`);
+      alert(`State sendo usado: ${stateValue}\nFormato: credentialId.timestamp\nTipo: ${typeof stateValue}\nComprimento: ${stateValue.length}\n\nVerifique o console para logs completos.`);
       
       // Redireciona para o Google OAuth
       window.location.href = googleAuthUrl;
@@ -139,8 +140,8 @@ const GoogleAuth = () => {
 
                   <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
                     <p className="text-sm text-amber-800 dark:text-amber-200">
-                      <strong>Debug:</strong> Abra o console do navegador (F12) para ver logs 
-                      detalhados do processo de autorização. Um alerta também mostrará detalhes do state.
+                      <strong>Novo formato:</strong> Agora usando formato "credentialId.timestamp" 
+                      que é mais compatível com o n8n. Verifique os logs no console (F12).
                     </p>
                   </div>
                 </div>
