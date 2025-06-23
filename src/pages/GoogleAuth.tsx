@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,10 +35,9 @@ const GoogleAuth = () => {
       const currentOrigin = window.location.origin;
       console.log('🌐 Origin atual da aplicação:', currentOrigin);
 
-      // Gerar um state compatível com n8n para Google Calendar
-      // n8n espera um formato simples sem caracteres especiais
-      const stateValue = `n8n_${Date.now()}`;
-      console.log('🔑 State gerado para n8n:', stateValue);
+      // State simples para n8n - apenas timestamp numérico
+      const stateValue = Date.now().toString();
+      console.log('🔑 State gerado (apenas timestamp):', stateValue);
 
       // Parâmetros OAuth 2.0 do Google para Calendar
       const googleAuthParams = new URLSearchParams({
