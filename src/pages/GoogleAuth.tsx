@@ -1,16 +1,45 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Shield, ArrowLeft } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 const GoogleAuth = () => {
   const navigate = useNavigate();
 
   const handleAuthorize = () => {
-    // Aqui será implementada a lógica de autorização do Google
-    console.log('Iniciando autorização do Google...');
+    try {
+      console.log('Iniciando autorização do Google...');
+      
+      // Parâmetros OAuth 2.0 do Google
+      const googleAuthParams = new URLSearchParams({
+        client_id: 'YOUR_GOOGLE_CLIENT_ID', // Será configurado via variável de ambiente
+        redirect_uri: 'https://n8n.tomazbello.com/rest/oauth2-credential/callback',
+        response_type: 'code',
+        scope: 'openid email profile',
+        access_type: 'offline',
+        prompt: 'consent',
+        state: btoa(JSON.stringify({
+          timestamp: Date.now(),
+          origin: window.location.origin
+        }))
+      });
+
+      // URL de autorização do Google
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${googleAuthParams.toString()}`;
+      
+      // Redireciona para o Google OAuth
+      window.location.href = googleAuthUrl;
+      
+    } catch (error) {
+      console.error('Erro ao iniciar autorização:', error);
+      toast({
+        title: "Erro na Autorização",
+        description: "Não foi possível iniciar o processo de autorização. Tente novamente.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleBack = () => {
@@ -52,13 +81,21 @@ const GoogleAuth = () => {
                 <div className="space-y-4">
                   <p className="text-gray-600 dark:text-gray-300">
                     Para integrar a autenticação com Google, é necessário autorizar a conexão 
-                    entre sua aplicação e os serviços do Google.
+                    entre sua aplicação e os serviços do Google via OAuth 2.0.
                   </p>
                   
                   <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
                     <p className="text-sm text-blue-800 dark:text-blue-200">
                       <strong>Segurança:</strong> Esta integração seguirá os protocolos OAuth 2.0 
-                      do Google para garantir a máxima segurança dos dados.
+                      do Google para garantir a máxima segurança dos dados. Você será redirecionado 
+                      para o Google de forma segura.
+                    </p>
+                  </div>
+
+                  <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                      <strong>Importante:</strong> Certifique-se de que o Client ID do Google 
+                      esteja configurado corretamente nas variáveis de ambiente.
                     </p>
                   </div>
                 </div>
@@ -67,16 +104,16 @@ const GoogleAuth = () => {
                   <Button 
                     onClick={handleAuthorize}
                     size="lg"
-                    className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 text-lg font-semibold"
+                    className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 text-lg font-semibold transition-all duration-200 hover:shadow-lg"
                   >
                     <Shield className="h-5 w-5 mr-2" />
-                    Autorizar
+                    Autorizar com Google
                   </Button>
                 </div>
 
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
-                  Ao clicar em "Autorizar", você será redirecionado para o Google para 
-                  completar a configuração da integração.
+                  Ao clicar em "Autorizar com Google", você será redirecionado para o Google para 
+                  completar a configuração da integração OAuth 2.0.
                 </p>
               </div>
             </CardContent>
