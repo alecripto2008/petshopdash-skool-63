@@ -12,7 +12,7 @@ const GoogleAuth = () => {
 
   const handleAuthorize = async () => {
     try {
-      console.log('🔄 Iniciando autorização do Google...');
+      console.log('🔄 Iniciando autorização do Google Calendar...');
       
       // Busca o Client ID do Google via Edge Function
       console.log('📡 Chamando Edge Function para buscar Client ID...');
@@ -36,16 +36,17 @@ const GoogleAuth = () => {
       const currentOrigin = window.location.origin;
       console.log('🌐 Origin atual da aplicação:', currentOrigin);
 
-      // Gerar um state simples e válido
-      const stateValue = `${Date.now()}_${Math.random().toString(36).substring(2)}`;
-      console.log('🔑 State gerado:', stateValue);
+      // Gerar um state compatível com n8n para Google Calendar
+      // n8n espera um formato simples sem caracteres especiais
+      const stateValue = `n8n_${Date.now()}`;
+      console.log('🔑 State gerado para n8n:', stateValue);
 
-      // Parâmetros OAuth 2.0 do Google
+      // Parâmetros OAuth 2.0 do Google para Calendar
       const googleAuthParams = new URLSearchParams({
         client_id: data.clientId,
         redirect_uri: 'https://n8n.tomazbello.com/rest/oauth2-credential/callback',
         response_type: 'code',
-        scope: 'openid email profile',
+        scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
         access_type: 'offline',
         prompt: 'consent',
         state: stateValue
@@ -54,7 +55,7 @@ const GoogleAuth = () => {
       // URL de autorização do Google
       const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${googleAuthParams.toString()}`;
       
-      console.log('🔗 URL de autorização construída:', googleAuthUrl);
+      console.log('🔗 URL de autorização construída para Google Calendar:', googleAuthUrl);
       console.log('🚀 Redirecionando para o Google OAuth...');
       
       // Redireciona para o Google OAuth
@@ -97,10 +98,10 @@ const GoogleAuth = () => {
                 </div>
               </div>
               <CardTitle className="text-2xl font-bold">
-                Autorização de Integração Segura
+                Autorização Google Calendar
               </CardTitle>
               <CardDescription className="text-red-100 mt-2">
-                Configure a autenticação com Google de forma segura
+                Configure a autenticação com Google Calendar de forma segura
               </CardDescription>
             </CardHeader>
             
@@ -108,15 +109,14 @@ const GoogleAuth = () => {
               <div className="text-center space-y-6">
                 <div className="space-y-4">
                   <p className="text-gray-600 dark:text-gray-300">
-                    Para integrar a autenticação com Google, é necessário autorizar a conexão 
-                    entre sua aplicação e os serviços do Google via OAuth 2.0.
+                    Para integrar o Google Calendar com o n8n, é necessário autorizar a conexão 
+                    entre sua aplicação e o Google Calendar via OAuth 2.0.
                   </p>
                   
                   <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
                     <p className="text-sm text-blue-800 dark:text-blue-200">
-                      <strong>Segurança:</strong> Esta integração seguirá os protocolos OAuth 2.0 
-                      do Google para garantir a máxima segurança dos dados. Você será redirecionado 
-                      para o Google de forma segura.
+                      <strong>Google Calendar:</strong> Esta integração permitirá acessar e gerenciar 
+                      eventos do seu Google Calendar através do n8n de forma segura.
                     </p>
                   </div>
 
@@ -135,13 +135,13 @@ const GoogleAuth = () => {
                     className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 text-lg font-semibold transition-all duration-200 hover:shadow-lg"
                   >
                     <Shield className="h-5 w-5 mr-2" />
-                    Autorizar com Google
+                    Autorizar Google Calendar
                   </Button>
                 </div>
 
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
-                  Ao clicar em "Autorizar com Google", você será redirecionado para o Google para 
-                  completar a configuração da integração OAuth 2.0.
+                  Ao clicar em "Autorizar Google Calendar", você será redirecionado para o Google para 
+                  completar a configuração da integração OAuth 2.0 com o Calendar.
                 </p>
               </div>
             </CardContent>
