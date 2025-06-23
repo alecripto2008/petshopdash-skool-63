@@ -36,6 +36,10 @@ const GoogleAuth = () => {
       const currentOrigin = window.location.origin;
       console.log('🌐 Origin atual da aplicação:', currentOrigin);
 
+      // Gerar um state simples e válido
+      const stateValue = `${Date.now()}_${Math.random().toString(36).substring(2)}`;
+      console.log('🔑 State gerado:', stateValue);
+
       // Parâmetros OAuth 2.0 do Google
       const googleAuthParams = new URLSearchParams({
         client_id: data.clientId,
@@ -44,10 +48,7 @@ const GoogleAuth = () => {
         scope: 'openid email profile',
         access_type: 'offline',
         prompt: 'consent',
-        state: btoa(JSON.stringify({
-          timestamp: Date.now(),
-          origin: currentOrigin
-        }))
+        state: stateValue
       });
 
       // URL de autorização do Google
