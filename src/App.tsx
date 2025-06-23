@@ -18,6 +18,7 @@ import ProductsManager from "./pages/ProductsManager";
 import PaymentsManager from "./pages/PaymentsManager";
 import UsersManager from "./pages/UsersManager";
 import ConfigManager from "./pages/ConfigManager";
+import GoogleAuth from "./pages/GoogleAuth";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -92,6 +93,11 @@ const App = () => (
               <Route path="/config" element={
                 <ProtectedRoute requiredPermission="canAccessConfig">
                   <ConfigManager />
+                </ProtectedRoute>
+              } />
+              <Route path="/google-auth" element={
+                <ProtectedRoute requiredPermission="canAccessConfig">
+                  <GoogleAuth />
                 </ProtectedRoute>
               } />
               <Route path="*" element={<NotFound />} />
