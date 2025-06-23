@@ -12,14 +12,29 @@ const GoogleAuth = () => {
 
   const handleAuthorize = async () => {
     try {
-      console.log('Iniciando autorização do Google...');
+      console.log('🔄 Iniciando autorização do Google...');
       
       // Busca o Client ID do Google via Edge Function
+      console.log('📡 Chamando Edge Function para buscar Client ID...');
       const { data, error } = await supabase.functions.invoke('get-google-client-id');
       
-      if (error || !data?.clientId) {
+      console.log('📊 Resposta da Edge Function:', { data, error });
+      
+      if (error) {
+        console.error('❌ Erro na Edge Function:', error);
+        throw new Error(`Erro na Edge Function: ${error.message}`);
+      }
+      
+      if (!data?.clientId) {
+        console.error('❌ Client ID não retornado:', data);
         throw new Error('Client ID do Google não configurado ou não encontrado');
       }
+
+      console.log('✅ Client ID obtido com sucesso:', data.clientId.substring(0, 20) + '...');
+
+      // URL atual da aplicação
+      const currentOrigin = window.location.origin;
+      console.log('🌐 Origin atual da aplicação:', currentOrigin);
 
       // Parâmetros OAuth 2.0 do Google
       const googleAuthParams = new URLSearchParams({
@@ -31,21 +46,24 @@ const GoogleAuth = () => {
         prompt: 'consent',
         state: btoa(JSON.stringify({
           timestamp: Date.now(),
-          origin: window.location.origin
+          origin: currentOrigin
         }))
       });
 
       // URL de autorização do Google
       const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${googleAuthParams.toString()}`;
       
+      console.log('🔗 URL de autorização construída:', googleAuthUrl);
+      console.log('🚀 Redirecionando para o Google OAuth...');
+      
       // Redireciona para o Google OAuth
       window.location.href = googleAuthUrl;
       
     } catch (error) {
-      console.error('Erro ao iniciar autorização:', error);
+      console.error('💥 Erro ao iniciar autorização:', error);
       toast({
         title: "Erro na Autorização",
-        description: "Não foi possível iniciar o processo de autorização. Verifique se o Client ID está configurado.",
+        description: `Erro: ${error.message}. Verifique o console para mais detalhes.`,
         variant: "destructive"
       });
     }
@@ -103,8 +121,8 @@ const GoogleAuth = () => {
 
                   <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
                     <p className="text-sm text-amber-800 dark:text-amber-200">
-                      <strong>Importante:</strong> Certifique-se de que o Client ID do Google 
-                      esteja configurado corretamente nas variáveis de ambiente.
+                      <strong>Debug:</strong> Abra o console do navegador (F12) para ver logs 
+                      detalhados do processo de autorização.
                     </p>
                   </div>
                 </div>
