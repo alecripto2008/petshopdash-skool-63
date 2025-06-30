@@ -81,14 +81,17 @@ export const useTokenStats = () => {
 
       // Preparar dados para os gráficos (últimos 6 meses em ordem decrescente)
       const monthlyStats: MonthlyTokenStats[] = [];
+      const today = new Date();
+      
       for (let i = 0; i < 6; i++) {
-        const date = new Date();
-        date.setMonth(date.getMonth() - i);
-        const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-        const monthName = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+        const date = new Date(today.getFullYear(), today.getMonth() - i, 1); // Começa no primeiro dia do mês
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const monthKey = `${year}-${month}`;
+        const monthName = `${monthNames[month]} ${year}`;
         
         const monthData = monthlyGroups[monthKey] || {};
-        const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
         
         const dailyCosts: DailyTokenCost[] = [];
         let monthTotal = 0;
@@ -99,7 +102,7 @@ export const useTokenStats = () => {
           monthTotal += dayTotal;
         }
         
-        monthlyStats.push({
+        monthlyStats.unshift({ // Adiciona no início para manter a ordem cronológica crescente
           monthName,
           dailyCosts,
           monthTotal
