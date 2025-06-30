@@ -1,92 +1,29 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Shield, ArrowLeft } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 
 const GoogleAuth = () => {
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
 
-  const handleAuthorize = async () => {
-    try {
-      console.log('🔄 Iniciando autorização do Google Calendar...');
-      
-      // Busca o Client ID do Google via Edge Function
-      console.log('📡 Chamando Edge Function para buscar Client ID...');
-      const { data, error } = await supabase.functions.invoke('get-google-client-id');
-      
-      console.log('📊 Resposta da Edge Function:', { data, error });
-      
-      if (error) {
-        console.error('❌ Erro na Edge Function:', error);
-        throw new Error(`Erro na Edge Function: ${error.message}`);
-      }
-      
-      if (!data?.clientId) {
-        console.error('❌ Client ID não retornado:', data);
-        throw new Error('Client ID do Google não configurado ou não encontrado');
-      }
-
-      console.log('✅ Client ID obtido com sucesso:', data.clientId.substring(0, 20) + '...');
-
-      // URL atual da aplicação
-      const currentOrigin = window.location.origin;
-      console.log('🌐 Origin atual da aplicação:', currentOrigin);
-
-      // Formato de state mais complexo para n8n - incluindo credentialId
-      const timestamp = Date.now();
-      const credentialId = 'google-calendar-oauth2'; // ID padrão para n8n
-      const stateObject = {
-        credentialId: credentialId,
-        timestamp: timestamp,
-        source: 'lovable-app'
-      };
-      
-      // Usar formato que o n8n espera: credentialId.timestamp
-      const stateValue = `${credentialId}.${timestamp}`;
-      
-      console.log('🔑 State object criado:', stateObject);
-      console.log('🔑 State final escolhido:', stateValue);
-      console.log('🔑 Tipo do state:', typeof stateValue);
-      console.log('🔑 Comprimento do state:', stateValue.length);
-      console.log('🔑 Formato usado: credentialId.timestamp');
-
-      // Parâmetros OAuth 2.0 do Google para Calendar
-      const googleAuthParams = new URLSearchParams({
-        client_id: data.clientId,
-        redirect_uri: 'https://n8n.tomazbello.com/rest/oauth2-credential/callback',
-        response_type: 'code',
-        scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
-        access_type: 'offline',
-        prompt: 'consent',
-        state: stateValue
-      });
-
-      // URL de autorização do Google
-      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${googleAuthParams.toString()}`;
-      
-      console.log('🔗 Parâmetros OAuth completos:', Object.fromEntries(googleAuthParams.entries()));
-      console.log('🔗 URL de autorização construída:', googleAuthUrl);
-      console.log('🔗 Redirect URI usado:', 'https://n8n.tomazbello.com/rest/oauth2-credential/callback');
-      console.log('🚀 Redirecionando para o Google OAuth...');
-      
-      // Mostrar alerta antes de redirecionar
-      alert(`State sendo usado: ${stateValue}\nFormato: credentialId.timestamp\nTipo: ${typeof stateValue}\nComprimento: ${stateValue.length}\n\nVerifique o console para logs completos.`);
-      
-      // Redireciona para o Google OAuth
-      window.location.href = googleAuthUrl;
-      
-    } catch (error) {
-      console.error('💥 Erro ao iniciar autorização:', error);
+  const iniciarAutorizacao = () => {
+    if (!email) {
       toast({
-        title: "Erro na Autorização",
-        description: `Erro: ${error.message}. Verifique o console para mais detalhes.`,
+        title: "Erro",
+        description: "Por favor, digite seu e-mail primeiro!",
         variant: "destructive"
       });
+      return;
     }
+
+    const clienteId = btoa(email); 
+    const url_do_fluxo_1 = `https://webhook.tomazbello.com/webhook/iniciar-autorizacao-google?clienteId=${clienteId}`;
+
+    window.location.href = url_do_fluxo_1;
   };
 
   const handleBack = () => {
@@ -127,40 +64,34 @@ const GoogleAuth = () => {
               <div className="text-center space-y-6">
                 <div className="space-y-4">
                   <p className="text-gray-600 dark:text-gray-300">
-                    Para integrar o Google Calendar com o n8n, é necessário autorizar a conexão 
-                    entre sua aplicação e o Google Calendar via OAuth 2.0.
+                    Para iniciar a autorização do Google Calendar, digite seu e-mail e clique no botão abaixo.
                   </p>
-                  
+                  <div className="flex flex-col items-center space-y-4">
+                    <input 
+                      type="email" 
+                      id="emailCliente" 
+                      placeholder="Digite seu e-mail" 
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full max-w-sm p-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    />
+                    <Button 
+                      onClick={iniciarAutorizacao}
+                      size="lg"
+                      className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 text-lg font-semibold transition-all duration-200 hover:shadow-lg"
+                    >
+                      <Shield className="h-5 w-5 mr-2" />
+                      Conectar com Google
+                    </Button>
+                  </div>
                   <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
                     <p className="text-sm text-blue-800 dark:text-blue-200">
-                      <strong>Google Calendar:</strong> Esta integração permitirá acessar e gerenciar 
-                      eventos do seu Google Calendar através do n8n de forma segura.
-                    </p>
-                  </div>
-
-                  <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
-                    <p className="text-sm text-amber-800 dark:text-amber-200">
-                      <strong>Novo formato:</strong> Agora usando formato "credentialId.timestamp" 
-                      que é mais compatível com o n8n. Verifique os logs no console (F12).
+                      <strong>Importante:</strong> Este processo iniciará o fluxo de autorização do Google Calendar, vinculando-o ao e-mail fornecido.
                     </p>
                   </div>
                 </div>
 
-                <div className="pt-4">
-                  <Button 
-                    onClick={handleAuthorize}
-                    size="lg"
-                    className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 text-lg font-semibold transition-all duration-200 hover:shadow-lg"
-                  >
-                    <Shield className="h-5 w-5 mr-2" />
-                    Autorizar Google Calendar
-                  </Button>
-                </div>
 
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
-                  Ao clicar em "Autorizar Google Calendar", você será redirecionado para o Google para 
-                  completar a configuração da integração OAuth 2.0 com o Calendar.
-                </p>
               </div>
             </CardContent>
           </Card>
