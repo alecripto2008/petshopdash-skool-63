@@ -81,10 +81,10 @@ export const useTokenStats = () => {
 
       // Preparar dados para os gráficos (últimos 6 meses em ordem decrescente)
       const monthlyStats: MonthlyTokenStats[] = [];
-      const today = new Date();
+      const currentDate = new Date();
       
       for (let i = 0; i < 6; i++) {
-        const date = new Date(today.getFullYear(), today.getMonth() - i, 1); // Começa no primeiro dia do mês
+        const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1); // Começa no primeiro dia do mês
         const year = date.getFullYear();
         const month = date.getMonth();
         const monthKey = `${year}-${month}`;

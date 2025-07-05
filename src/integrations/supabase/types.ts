@@ -222,6 +222,30 @@ export type Database = {
         }
         Relationships: []
       }
+      feriados: {
+        Row: {
+          created_at: string
+          data: string | null
+          habilitado: boolean | null
+          id: number
+          nome: string | null
+        }
+        Insert: {
+          created_at?: string
+          data?: string | null
+          habilitado?: boolean | null
+          id?: number
+          nome?: string | null
+        }
+        Update: {
+          created_at?: string
+          data?: string | null
+          habilitado?: boolean | null
+          id?: number
+          nome?: string | null
+        }
+        Relationships: []
+      }
       n8n_chat_histories: {
         Row: {
           id: number
@@ -309,6 +333,7 @@ export type Database = {
       professionals: {
         Row: {
           active: boolean | null
+          app: string | null
           created_at: string
           email: string | null
           iCalUID: string | null
@@ -319,6 +344,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean | null
+          app?: string | null
           created_at?: string
           email?: string | null
           iCalUID?: string | null
@@ -329,6 +355,7 @@ export type Database = {
         }
         Update: {
           active?: boolean | null
+          app?: string | null
           created_at?: string
           email?: string | null
           iCalUID?: string | null
