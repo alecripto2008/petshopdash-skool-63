@@ -102,7 +102,7 @@ export const useTokenStats = () => {
           monthTotal += dayTotal;
         }
         
-        monthlyStats.unshift({ // Adiciona no início para manter a ordem cronológica crescente
+        monthlyStats.push({ // Adiciona no final para manter a ordem cronológica decrescente
           monthName,
           dailyCosts,
           monthTotal
