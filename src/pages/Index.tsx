@@ -204,9 +204,9 @@ const Index = () => {
                   Lembrar-me
                 </label>
               </div>
-              <a href="#" className="text-sm text-petshop-gold hover:text-white transition-colors duration-300">
+              <button type="button" className="text-sm text-petshop-gold hover:text-white transition-colors duration-300">
                 Esqueceu a senha?
-              </a>
+              </button>
             </div>
 
             <button
