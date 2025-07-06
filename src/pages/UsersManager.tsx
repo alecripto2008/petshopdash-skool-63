@@ -7,6 +7,7 @@ import { useUsers } from '@/hooks/useUsers';
 import { UsersTable } from '@/components/users/UsersTable';
 import { AddUserDialog } from '@/components/users/AddUserDialog';
 import UserSearchBar from '@/components/users/UserSearchBar';
+import { UserManualPDF } from '@/components/users/UserManualPDF';
 
 const UsersManager = () => {
   const { user, isLoading: authLoading } = useAuth();
@@ -57,13 +58,16 @@ const UsersManager = () => {
       <UsersHeader />
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6 flex flex-col gap-4">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-              Gerenciamento de Usuários
-            </h2>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">
-              Gerencie usuários, permissões e controle de acesso do sistema
-            </p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                Gerenciamento de Usuários
+              </h2>
+              <p className="mt-2 text-gray-600 dark:text-gray-400">
+                Gerencie usuários, permissões e controle de acesso do sistema
+              </p>
+            </div>
+            <UserManualPDF />
           </div>
           <div className="w-full">
             <UserSearchBar 
