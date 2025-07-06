@@ -33,7 +33,8 @@ export const parseMessage = (chatHistory: N8nChatHistory): ChatMessage[] => {
   const parsedMessages: ChatMessage[] = [];
   
   try {
-    const timestamp = chatHistory.data ? extractHourFromTimestamp(chatHistory.data) : '';
+    // Get current timestamp since the data field doesn't exist in the actual table
+    const timestamp = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     
     if (typeof chatHistory.message === 'string') {
       try {
