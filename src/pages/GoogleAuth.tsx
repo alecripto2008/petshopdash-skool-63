@@ -38,6 +38,7 @@ const GoogleAuth = () => {
             onClick={handleBack}
             variant="ghost" 
             className="mb-4"
+            type="button"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar ao Dashboard
@@ -90,8 +91,6 @@ const GoogleAuth = () => {
                     </p>
                   </div>
                 </div>
-
-
               </div>
             </CardContent>
           </Card>
