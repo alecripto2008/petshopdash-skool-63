@@ -66,7 +66,7 @@ const GoogleAuth = () => {
                   <p className="text-gray-600 dark:text-gray-300">
                     Para iniciar a autorização do Google Calendar, digite seu e-mail e clique no botão abaixo.
                   </p>
-                  <div className="flex flex-col items-center space-y-4">
+                  <form onSubmit={(e) => { e.preventDefault(); iniciarAutorizacao(); }} className="flex flex-col items-center space-y-4">
                     <input 
                       type="email" 
                       id="emailCliente" 
@@ -76,14 +76,14 @@ const GoogleAuth = () => {
                       className="w-full max-w-sm p-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     />
                     <Button 
-                      onClick={iniciarAutorizacao}
+                      type="submit"
                       size="lg"
                       className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 text-lg font-semibold transition-all duration-200 hover:shadow-lg"
                     >
                       <Shield className="h-5 w-5 mr-2" />
                       Conectar com Google
                     </Button>
-                  </div>
+                  </form>
                   <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
                     <p className="text-sm text-blue-800 dark:text-blue-200">
                       <strong>Importante:</strong> Este processo iniciará o fluxo de autorização do Google Calendar, vinculando-o ao e-mail fornecido.
